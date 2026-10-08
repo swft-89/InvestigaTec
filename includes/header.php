@@ -1,0 +1,1 @@
+<header class="topbar"><button id="menu-toggle" aria-label="Mostrar menú" class="mobile-menu">☰</button><div class="top-title">Instituto Tecnológico de Ciudad Juárez</div><div class="top-right"><span class="mode">ENTORNO DE DEMOSTRACIÓN</span><a class="account-link" href="?page=acceso" id="account-status">Cuenta de estudiante</a></div></header>

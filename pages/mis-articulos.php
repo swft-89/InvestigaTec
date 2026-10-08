@@ -1,0 +1,2 @@
+<div class="page-head"><p class="eyebrow">Espacio del estudiante</p><h1>Mis artículos</h1><p class="subtitle">Consulta el estado de tus entregas y administra tus documentos pendientes.</p></div>
+<div class="section-heading"><h2>Artículos registrados</h2><a class="button primary" href="?page=subir">Nuevo artículo</a></div><div class="panel table-scroller"><table><thead><tr><th>Investigación</th><th>Área</th><th>Fecha</th><th>Estado</th><th>Versión</th><th>Acciones</th></tr></thead><tbody id="my-list"></tbody></table></div>

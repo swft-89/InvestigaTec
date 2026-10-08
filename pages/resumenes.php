@@ -1,0 +1,2 @@
+<div class="page-head"><p class="eyebrow">Consulta</p><h1>Resúmenes</h1><p class="subtitle">Visualiza los resúmenes de muestra asociados a tus artículos.</p></div>
+<div class="panel"><p class="notice">La generación automática con procesamiento de lenguaje natural aún no está conectada. Los resúmenes mostrados son de ejemplo.</p><div id="summaries-list"></div></div>

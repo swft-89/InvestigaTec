@@ -1,0 +1,3 @@
+import {service} from '../services.js';import {toast} from '../main.js';
+export function initProfile(){const f=document.querySelector('#profile-form'),user=service.getUser();['name','email','studentId','major','skills','interests'].forEach(k=>f.elements[k].value=user[k]||'');f.addEventListener('submit',e=>{e.preventDefault();let data={...user};['name','studentId','major','skills','interests'].forEach(k=>data[k]=f.elements[k].value.trim());const p=f.elements.portrait.files[0];if(p&&(!['image/png','image/jpeg'].includes(p.type)||p.size>1024*1024))return toast('Selecciona imagen JPG o PNG menor a 1 MB'); // La imagen no se guarda en demo
+service.saveUser(data);toast('Perfil guardado en este navegador. La imagen requiere backend.');});}
