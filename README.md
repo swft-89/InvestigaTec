@@ -1,12 +1,5 @@
 # InvestigaTec · Interfaz modular para Visual Studio Code
 
-## Ejecutar
-
-1. Extrae el ZIP y abre la carpeta `InvestigaTec_Modular` en Visual Studio Code.
-2. Requiere **PHP 8+** para cargar las plantillas `.php` (la extensión Live Server sola NO ejecuta PHP).
-3. Abre una terminal en la raíz y ejecuta `php -S localhost:8000`.
-4. En el navegador visita `http://localhost:8000`.
-
 ## Organización
 
 - `index.php`: controlador de páginas (no concentra su contenido).
