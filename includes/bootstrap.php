@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__.'/auth.php';
 $config = require __DIR__.'/../config/app.php';
 $allowed = ['inicio','explorar','mis-articulos','subir','resumenes','perfil','notificaciones','acceso'];
 $page = $_GET['page'] ?? 'inicio';
