@@ -50,6 +50,11 @@ button {
     z-index: 5
 }
 
+.sidebar-close,
+.sidebar-backdrop {
+    display: none
+}
+
 .brand {
     height: 170px;
     display: flex;
@@ -122,6 +127,7 @@ button {
 }
 
 .topbar {
+    position: relative;
     height: 66px;
     background: #fff;
     border-bottom: 1px solid var(--line);
@@ -153,8 +159,106 @@ button {
 }
 
 .account-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    border: 0;
+    padding: 0;
+    background: transparent;
+    color: var(--blue2);
+    font: inherit;
     font-size: 12px;
     font-weight: 600
+}
+
+.account-menu {
+    position: relative
+}
+
+.account-trigger-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid var(--line)
+}
+
+.account-trigger-placeholder {
+    display: grid;
+    place-items: center;
+    background: #edf2f9;
+    font-size: 18px
+}
+
+.account-popover {
+    position: absolute;
+    z-index: 10;
+    top: calc(100% + 14px);
+    right: 0;
+    width: min(320px, calc(100vw - 28px));
+    padding: 18px;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: 0 10px 28px #172b4d24
+}
+
+.account-popover[hidden] {
+    display: none
+}
+
+.account-popover-user {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--line)
+}
+
+.account-popover-avatar {
+    flex: 0 0 52px;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    object-fit: cover
+}
+
+.account-popover-user div {
+    min-width: 0;
+    display: grid;
+    gap: 3px
+}
+
+.account-popover-user strong,
+.account-popover-user span {
+    overflow-wrap: anywhere
+}
+
+.account-popover-user span {
+    color: var(--muted);
+    font-size: 12px
+}
+
+.account-popover-action {
+    display: block;
+    width: 100%;
+    margin-top: 12px;
+    padding: 8px 0;
+    text-align: left;
+    color: var(--blue2);
+    border: 0;
+    background: transparent;
+    font: inherit;
+    font-weight: 600
+}
+
+.account-popover .button {
+    width: 100%;
+    margin: 12px 0 0
+}
+
+.account-popover>p {
+    margin: 0
 }
 
 .mobile-menu {
@@ -409,6 +513,79 @@ button {
     padding: 28px
 }
 
+.registration-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+    gap: 15px 19px
+}
+
+.registration-form h2,
+.registration-form .profile-photo,
+.registration-form .form-grid,
+.registration-form>button,
+.registration-form>[role="alert"],
+.registration-form>p {
+    grid-column: 1 / -1
+}
+
+.registration-form>label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    color: #4c596a;
+    font-size: 12px;
+    font-weight: 600
+}
+
+.registration-form>label input,
+.registration-form>label select {
+    width: 100%;
+    padding: 11px 12px;
+    border: 1px solid #cfd7df;
+    border-radius: 5px;
+    background: #fff;
+    color: var(--text)
+}
+
+.registration-form textarea {
+    width: 100%;
+    padding: 11px 12px;
+    border: 1px solid #cfd7df;
+    border-radius: 5px;
+    color: var(--text);
+    resize: vertical
+}
+
+.registration-form>button {
+    min-height: 44px
+}
+
+.profile-photo {
+    display: flex;
+    align-items: center;
+    gap: 18px
+}
+
+.profile-photo img {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover
+}
+
+.profile-photo img[hidden] {
+    display: none
+}
+
+.profile-photo label {
+    display: grid;
+    gap: 6px;
+    color: #4c596a;
+    font-size: 12px;
+    font-weight: 600
+}
+
 .form-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -582,11 +759,45 @@ tbody tr:last-child td {
 @media(max-width:800px) {
     .sidebar {
         transform: translateX(-100%);
-        transition: .2s
+        transition: transform .2s;
+        z-index: 21
     }
 
     .sidebar.open {
         transform: none
+    }
+
+    .sidebar-close {
+        position: absolute;
+        top: 12px;
+        right: 14px;
+        display: grid;
+        width: 38px;
+        height: 38px;
+        place-items: center;
+        border: 1px solid var(--line);
+        border-radius: 50%;
+        background: #fff;
+        color: var(--blue);
+        font-size: 27px;
+        line-height: 1;
+        z-index: 1
+    }
+
+    .sidebar-backdrop:not([hidden]) {
+        position: fixed;
+        inset: 0;
+        display: block;
+        width: 100%;
+        height: 100%;
+        padding: 0;
+        border: 0;
+        background: #101a2b80;
+        z-index: 20
+    }
+
+    body.sidebar-open {
+        overflow: hidden
     }
 
     .workspace {
@@ -617,9 +828,22 @@ tbody tr:last-child td {
         padding: 24px 18px
     }
 
-    .cards,
-    .account-grid {
+    .cards {
         grid-template-columns: 1fr
+    }
+
+    .registration-form {
+        grid-template-columns: 1fr
+    }
+
+    .registration-form>label,
+    .registration-form h2,
+    .registration-form .profile-photo,
+    .registration-form .form-grid,
+    .registration-form>button,
+    .registration-form>[role="alert"],
+    .registration-form>p {
+        grid-column: 1
     }
 
     .overview {

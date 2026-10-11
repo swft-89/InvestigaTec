@@ -54,5 +54,6 @@ function login_user(array $u): void {
         'name' => trim($u['nombre'].' '.$u['apellido_paterno'].' '.($u['apellido_materno'] ?? '')),
         'email' => $u['correo'],
         'type' => $u['tipo_usuario'],
+        'portrait' => $u['imagen_perfil'] ?? null,
     ];
 }

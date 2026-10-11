@@ -9,9 +9,12 @@ async function apiRequest(url, payload) {
   const options = {credentials:'same-origin',headers:{'Accept':'application/json'}};
   if (payload !== undefined) {
     options.method='POST';
-    options.headers['Content-Type']='application/json';
     options.headers['X-CSRF-Token']=csrfToken();
-    options.body=JSON.stringify(payload);
+    if (payload instanceof FormData) options.body=payload;
+    else {
+      options.headers['Content-Type']='application/json';
+      options.body=JSON.stringify(payload);
+    }
   }
   const response=await fetch(url,options);
   let result;
@@ -25,6 +28,11 @@ export const service={
  registerStudent:data=>apiRequest('api/register.php',data),
  login:data=>apiRequest('api/login.php',data),
  logout:()=>apiRequest('api/logout.php',{}),
+ getProfile:()=>apiRequest('api/profile.php'),
+ saveProfile:data=>apiRequest('api/profile.php',data),
+ getProjectOptions:()=>apiRequest('api/projects.php'),
+ createProject:data=>apiRequest('api/projects.php',data),
+ getMyProjects:()=>apiRequest('api/my-projects.php'),
  getUser:()=>window.INVESTIGATEC_AUTH_USER ? {...get('investigatec_profile_demo',{}),...window.INVESTIGATEC_AUTH_USER} : {name:'Invitado',email:'',major:''},
  saveUser:user=>set('investigatec_profile_demo',user), // Solo preferencias de perfil en demo; NO actualiza usuarios en PostgreSQL.
  getArticles:()=>get('investigatec_articles',initialArticles),

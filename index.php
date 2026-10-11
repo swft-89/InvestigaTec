@@ -3,5 +3,5 @@
 <body data-page="<?= e($page) ?>"><?php require __DIR__.'/includes/sidebar.php'; ?>
 <div class="workspace"><?php require __DIR__.'/includes/header.php'; ?><main id="contenido" class="content"><?php require __DIR__.'/pages/'.$page.'.php'; ?></main><footer class="footer">InvestigaTec · Repositorio Digital de Proyectos de Investigación <span>Instituto Tecnológico de Ciudad Juárez</span></footer></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
-<script>window.INVESTIGATEC_AUTH_USER = <?= json_encode(current_user(), JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT|JSON_INVALID_UTF8_SUBSTITUTE) ?>;</script>
-<script type="module" src="assets/js/main.js"></script></body></html>
+<script>window.INVESTIGATEC_AUTH_USER = <?= json_encode(current_user(), JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT|JSON_INVALID_UTF8_SUBSTITUTE) ?>;window.INVESTIGATEC_PROFILE_ASSET_VERSION = <?= json_encode((string)filemtime(__DIR__.'/assets/js/pages/profile.js')) ?>;</script>
+<script type="module" src="assets/js/main.js?v=<?= e((string)filemtime(__DIR__.'/assets/js/main.js')) ?>"></script></body></html>

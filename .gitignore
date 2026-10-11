@@ -14,3 +14,7 @@
 
 # Archivo de pruebas local
 /verificar_php.php
+
+# Fotos de perfil cargadas por usuarios
+/uploads/perfiles/*
+!/uploads/perfiles/.gitkeep

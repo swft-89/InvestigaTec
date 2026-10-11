@@ -1,5 +1,5 @@
 import {service} from '../services.js';
-import {toast} from '../main.js';
+import {toast} from '../shared.js';
 
 function fields(form) { return Object.fromEntries(new FormData(form).entries()); }
 function message(id, value) {
@@ -8,31 +8,51 @@ function message(id, value) {
 }
 
 export function initAccount() {
+  const toggle = document.getElementById('account-toggle');
+  const popover = document.getElementById('account-popover');
+  toggle?.addEventListener('click', () => {
+    const open = toggle.getAttribute('aria-expanded') === 'true';
+    toggle.setAttribute('aria-expanded', String(!open));
+    popover.hidden = open;
+  });
+  document.addEventListener('click', event => {
+    if (popover && toggle && !popover.contains(event.target) && !toggle.contains(event.target)) {
+      popover.hidden = true;
+      toggle.setAttribute('aria-expanded', 'false');
+    }
+  });
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && popover && toggle) {
+      popover.hidden = true;
+      toggle.setAttribute('aria-expanded', 'false');
+      toggle.focus();
+    }
+  });
+
   const logout = document.getElementById('logout');
   logout?.addEventListener('click', async () => {
     logout.disabled = true;
     try {
       await service.logout();
-      location.href = '?page=acceso';
+      location.href = '?page=inicio';
     } catch (error) {
       message('logout-error', error.message);
       logout.disabled = false;
     }
   });
 
-  // Cuando hay sesión activa, los formularios no se muestran.
   const login = document.getElementById('login-form');
   const reg = document.getElementById('register-form');
-  if (!login || !reg) return;
+  if (reg) {
+    service.fetchCareers().then(({carreras}) => {
+      const select = document.getElementById('carrera-select');
+      select.replaceChildren(new Option(carreras.length ? 'Selecciona una carrera' : 'No hay carreras registradas', ''));
+      for (const c of carreras) select.add(new Option(`${c.nombre} (${c.siglas})`, c.id_carrera));
+      if (!carreras.length) message('register-error', 'Antes registra un departamento y una carrera en PostgreSQL.');
+    }).catch(error => message('register-error', error.message));
+  }
 
-  service.fetchCareers().then(({carreras}) => {
-    const select = document.getElementById('carrera-select');
-    select.replaceChildren(new Option(carreras.length ? 'Selecciona una carrera' : 'No hay carreras registradas', ''));
-    for (const c of carreras) select.add(new Option(`${c.nombre} (${c.siglas})`, c.id_carrera));
-    if (!carreras.length) message('register-error', 'Antes registra un departamento y una carrera en PostgreSQL.');
-  }).catch(error => message('register-error', error.message));
-
-  login.addEventListener('submit', async event => {
+  login?.addEventListener('submit', async event => {
     event.preventDefault();
     message('login-error', '');
     const button = login.querySelector('[type=submit]');
@@ -45,7 +65,7 @@ export function initAccount() {
     finally { button.disabled = false; }
   });
 
-  reg.addEventListener('submit', async event => {
+  reg?.addEventListener('submit', async event => {
     event.preventDefault();
     message('register-error', '');
     const button = reg.querySelector('[type=submit]');
@@ -53,7 +73,8 @@ export function initAccount() {
     try {
       await service.registerStudent(fields(reg));
       reg.reset();
-      toast('Cuenta creada. Ahora inicia sesión.');
+      message('register-error', 'Cuenta creada. Abre la ficha de usuario para iniciar sesión.');
+      toast('Cuenta creada correctamente.');
     } catch (error) { message('register-error', error.message); }
     finally { button.disabled = false; }
   });

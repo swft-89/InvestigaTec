@@ -9,7 +9,13 @@ $password = (string)($d['password'] ?? '');
 if (!filter_var($correo, FILTER_VALIDATE_EMAIL) || $password === '') json_response(422,['error'=>'Ingresa un correo y una contraseña válidos.']);
 try {
     $pdo = db();
-    $q = $pdo->prepare('SELECT id_usuario, nombre, apellido_paterno, apellido_materno, correo, password_hash, tipo_usuario, estado_cuenta FROM usuarios WHERE correo = :correo');
+    $q = $pdo->prepare(
+        'SELECT u.id_usuario, u.nombre, u.apellido_paterno, u.apellido_materno, u.correo,
+                u.password_hash, u.tipo_usuario, u.estado_cuenta, p.imagen_perfil
+         FROM usuarios u
+         LEFT JOIN ext_estudiante_perfil p ON p.id_usuario = u.id_usuario
+         WHERE u.correo = :correo'
+    );
     $q->execute(['correo'=>$correo]);
     $u = $q->fetch();
     if (!$u || !password_verify($password, $u['password_hash'])) json_response(401,['error'=>'Correo o contraseña incorrectos.']);
