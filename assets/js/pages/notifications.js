@@ -1,2 +1,2 @@
-import {service} from '../services.js';import {escapeHtml,toast} from '../main.js';
+import {service} from '../services.js';import {escapeHtml,toast} from '../shared.js';
 export function initNotifications(){const target=document.querySelector('#notifications-list');function render(){target.innerHTML=service.getNotices().map(n=>`<div class="note-row"><h3>${escapeHtml(n.text)} ${n.read?'':'· Nuevo'}</h3><p>${escapeHtml(n.date)}</p></div>`).join('')||'<p>No tienes avisos.</p>';}document.querySelector('#mark-read').addEventListener('click',()=>{service.saveNotices(service.getNotices().map(n=>({...n,read:true})));toast('Avisos marcados como leídos');render()});render();}

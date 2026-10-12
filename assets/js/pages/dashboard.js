@@ -1,2 +1,2 @@
-import {service} from '../services.js';import {articleCard} from '../main.js';
+import {service} from '../services.js';import {articleCard} from '../shared.js';
 export function initDashboard(){const items=service.getArticles();document.querySelector('#stats').innerHTML=`<div class="stat"><strong>${items.length}</strong><span>Artículos registrados</span></div><div class="stat"><strong>${items.filter(a=>a.status==='Aprobado').length}</strong><span>Artículos aprobados</span></div><div class="stat"><strong>${new Set(items.map(a=>a.area)).size}</strong><span>Áreas de conocimiento</span></div>`;document.querySelector('#recent-list').innerHTML=items.filter(a=>a.status==='Aprobado'&&a.visibility==='Público').slice(0,3).map(articleCard).join('');}
