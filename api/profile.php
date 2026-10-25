@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 require __DIR__ . '/../includes/auth.php';
-require __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../config/database.php';
 
 $user = current_user();
 if (!$user) json_response(401, ['error' => 'Inicia sesión para consultar tu perfil.']);

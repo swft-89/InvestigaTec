@@ -1,5 +1,11 @@
 <?php $usuarioEncabezado = current_user(); ?>
 <header class="topbar"><button id="menu-toggle" aria-label="Mostrar menú" aria-expanded="false" aria-controls="sidebar" class="mobile-menu">☰</button><div class="top-title">Instituto Tecnológico de Ciudad Juárez</div><div class="top-right">
+  <?php if ($usuarioEncabezado && empty($usuarioEncabezado['is_admin'])): ?>
+    <a class="notifications-shortcut" href="?page=notificaciones" aria-label="Notificaciones">
+      <span>Notificaciones</span>
+      <span class="notifications-badge" id="unread-notifications-count" hidden>0</span>
+    </a>
+  <?php endif; ?>
   <div class="account-menu">
     <button class="account-link" type="button" id="account-toggle" aria-expanded="false" aria-controls="account-popover">
       <?php if (!empty($usuarioEncabezado['portrait'])): ?>
@@ -19,7 +25,7 @@
           <?php endif; ?>
           <div><strong><?= e($usuarioEncabezado['name']) ?></strong><span><?= e($usuarioEncabezado['email']) ?></span></div>
         </div>
-        <?php if ($usuarioEncabezado['type'] === 'ESTUDIANTE'): ?><a class="account-popover-action" href="?page=perfil">Editar perfil</a><?php endif; ?>
+        <?php if ($usuarioEncabezado['type'] === 'ESTUDIANTE' && empty($usuarioEncabezado['is_admin'])): ?><a class="account-popover-action" href="?page=perfil">Editar perfil</a><?php endif; ?>
         <button class="account-popover-action" id="logout" type="button">Cerrar sesión</button>
         <p id="logout-error" role="alert" aria-live="polite"></p>
       <?php else: ?>

@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 require __DIR__ . '/../includes/auth.php';
-require __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../config/database.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     try {
@@ -52,6 +52,7 @@ foreach ($rawAreas as $rawArea) {
     $areaIds[] = $areaId;
 }
 $areaIds = array_values(array_unique($areaIds));
+if (count($areaIds) > 3) json_response(422, ['error' => 'Selecciona como máximo 3 áreas temáticas.']);
 
 $keywords = array_values(array_unique(array_filter(
     array_map(static fn(string $value): string => mb_strtolower(trim($value), 'UTF-8'), explode(',', $keywordsText)),

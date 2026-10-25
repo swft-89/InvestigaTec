@@ -17,7 +17,37 @@ function csrf_token(): string {
     if (!isset($_SESSION['csrf_token'])) $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
     return $_SESSION['csrf_token'];
 }
-function current_user(): ?array { return $_SESSION['user'] ?? null; }
+function current_user(): ?array
+{
+    static $checked = false;
+    static $user = null;
+    if ($checked) return $user;
+    $checked = true;
+    $user = $_SESSION['user'] ?? null;
+    if (!is_array($user)) return null;
+
+    require_once __DIR__ . '/../config/database.php';
+    $query = db()->prepare(
+        'SELECT correo, tipo_usuario, estado_cuenta, ext_aprobada, ext_administrador
+         FROM usuarios WHERE id_usuario = :id'
+    );
+    $query->execute(['id' => $user['id']]);
+    $account = $query->fetch();
+    if (!$account || $account['estado_cuenta'] !== 'ACTIVA' ||
+        !filter_var($account['ext_aprobada'], FILTER_VALIDATE_BOOLEAN)) {
+        unset($_SESSION['user']);
+        session_regenerate_id(true);
+        $user = null;
+        return null;
+    }
+
+    $_SESSION['user']['email'] = $account['correo'];
+    $_SESSION['user']['type'] = $account['tipo_usuario'];
+    $_SESSION['user']['is_admin'] = filter_var($account['ext_administrador'], FILTER_VALIDATE_BOOLEAN)
+        && strtolower((string)$account['correo']) === 'admin@investigatec.mx';
+    $user = $_SESSION['user'];
+    return $user;
+}
 function require_csrf(): void {
     $incoming = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
     if (!is_string($incoming) || !hash_equals(csrf_token(), $incoming)) {
@@ -55,5 +85,7 @@ function login_user(array $u): void {
         'email' => $u['correo'],
         'type' => $u['tipo_usuario'],
         'portrait' => $u['imagen_perfil'] ?? null,
+        'is_admin' => filter_var($u['ext_administrador'] ?? false, FILTER_VALIDATE_BOOLEAN)
+            && strtolower((string)$u['correo']) === 'admin@investigatec.mx',
     ];
 }

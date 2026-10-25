@@ -258,7 +258,8 @@ CREATE TABLE ext_notificacion (
     tipo            VARCHAR(40),
     mensaje         TEXT NOT NULL,
     fecha_envio     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    estado_envio    VARCHAR(20) NOT NULL DEFAULT 'PENDIENTE'
+    estado_envio    VARCHAR(20) NOT NULL DEFAULT 'NO_APLICA',
+    leida           BOOLEAN NOT NULL DEFAULT FALSE
 );
 
 CREATE TABLE ext_estudiante_perfil (

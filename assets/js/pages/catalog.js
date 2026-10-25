@@ -1,2 +1,38 @@
-import {service} from '../services.js';import {articleCard,accessible} from '../shared.js';
-export function initCatalog(){const all=service.getArticles().filter(accessible),search=document.querySelector('#search'),area=document.querySelector('#area'),year=document.querySelector('#year');[...new Set(all.map(a=>a.area))].sort().forEach(v=>area.add(new Option(v,v)));[...new Set(all.map(a=>a.date.slice(0,4)))].sort().reverse().forEach(v=>year.add(new Option(v,v)));function render(){let q=search.value.trim().toLowerCase(),out=all.filter(a=>(!area.value||area.value===a.area)&&(!year.value||a.date.startsWith(year.value))&&[a.title,a.author,a.keywords,a.description].some(t=>t.toLowerCase().includes(q)));document.querySelector('#result-count').textContent=`${out.length} artículo(s) encontrado(s)`;document.querySelector('#articles-list').innerHTML=out.length?out.map(articleCard).join(''):'<div class="panel">No se encontraron artículos con esos filtros.</div>';}[search,area,year].forEach(x=>x.addEventListener('input',render));render();}
+import {service} from '../services.js';
+import {articleCard, escapeHtml} from '../shared.js';
+
+export async function initCatalog() {
+  const search = document.querySelector('#search');
+  const area = document.querySelector('#area');
+  const year = document.querySelector('#year');
+  const list = document.querySelector('#articles-list');
+  const count = document.querySelector('#result-count');
+  let all;
+
+  function render() {
+    const query = search.value.trim().toLocaleLowerCase();
+    const results = all.filter(article =>
+      (!area.value || article.areas.split(', ').includes(area.value)) &&
+      (!year.value || article.fecha.startsWith(year.value)) &&
+      [article.titulo, article.autores, article.palabras_clave, article.resumen]
+        .some(value => value.toLocaleLowerCase().includes(query))
+    );
+    count.textContent = `${results.length} artículo(s) encontrado(s)`;
+    list.innerHTML = results.length
+      ? results.map(articleCard).join('')
+      : '<div class="panel">No se encontraron artículos publicados con esos filtros.</div>';
+  }
+
+  try {
+    ({articles: all} = await service.getPublicProjects());
+    [...new Set(all.flatMap(article => article.areas.split(', ')))].filter(Boolean).sort()
+      .forEach(value => area.add(new Option(value, value)));
+    [...new Set(all.map(article => article.fecha.slice(0, 4)))].filter(Boolean).sort().reverse()
+      .forEach(value => year.add(new Option(value, value)));
+    [search, area, year].forEach(element => element.addEventListener('input', render));
+    render();
+  } catch (error) {
+    count.textContent = '';
+    list.innerHTML = `<div class="panel" role="alert">${escapeHtml(error.message)}</div>`;
+  }
+}

@@ -43,6 +43,16 @@ export function initAccount() {
 
   const login = document.getElementById('login-form');
   const reg = document.getElementById('register-form');
+  document.querySelectorAll('.password-visibility').forEach(passwordToggle => {
+    passwordToggle.addEventListener('click', () => {
+      const password = document.getElementById(passwordToggle.getAttribute('aria-controls'));
+      if (!password) return;
+      const visible = password.type === 'password';
+      password.type = visible ? 'text' : 'password';
+      passwordToggle.setAttribute('aria-pressed', String(visible));
+      passwordToggle.setAttribute('aria-label', visible ? 'Ocultar contraseña' : 'Mostrar contraseña');
+    });
+  });
   if (reg) {
     service.fetchCareers().then(({carreras}) => {
       const select = document.getElementById('carrera-select');
@@ -60,7 +70,9 @@ export function initAccount() {
     try {
       await service.login({correo:login.elements.email.value.trim(), password:login.elements.password.value});
       toast('Sesión iniciada');
-      location.href = '?page=inicio';
+      location.href = login.elements.email.value.trim().toLowerCase() === 'admin@investigatec.mx'
+        ? '?page=admin'
+        : '?page=inicio';
     } catch (error) { message('login-error', error.message); }
     finally { button.disabled = false; }
   });
@@ -71,9 +83,9 @@ export function initAccount() {
     const button = reg.querySelector('[type=submit]');
     button.disabled = true;
     try {
-      await service.registerStudent(fields(reg));
+      const result = await service.registerStudent(fields(reg));
       reg.reset();
-      message('register-error', 'Cuenta creada. Abre la ficha de usuario para iniciar sesión.');
+      message('register-error', result.message);
       toast('Cuenta creada correctamente.');
     } catch (error) { message('register-error', error.message); }
     finally { button.disabled = false; }

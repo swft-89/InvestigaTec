@@ -1,5 +1,5 @@
 <?php require __DIR__.'/includes/bootstrap.php'; ?>
-<!doctype html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="csrf-token" content="<?= e(csrf_token()) ?>"><title><?= e($labels[$page]) ?> · InvestigaTec</title><link rel="stylesheet" href="assets/css/styles.css"></head>
+<!doctype html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="csrf-token" content="<?= e(csrf_token()) ?>"><title><?= e($labels[$page]) ?> · InvestigaTec</title><link rel="icon" type="image/png" href="assets/img/logo-investigatec.png"><link rel="stylesheet" href="assets/css/styles.css"></head>
 <body data-page="<?= e($page) ?>"><?php require __DIR__.'/includes/sidebar.php'; ?>
 <div class="workspace"><?php require __DIR__.'/includes/header.php'; ?><main id="contenido" class="content"><?php require __DIR__.'/pages/'.$page.'.php'; ?></main><footer class="footer">InvestigaTec · Repositorio Digital de Proyectos de Investigación <span>Instituto Tecnológico de Ciudad Juárez</span></footer></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>

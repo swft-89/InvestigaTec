@@ -24,7 +24,7 @@ export async function initMyArticles() {
     const {projects} = await service.getMyProjects();
     tbody.innerHTML = projects.length
       ? projects.map(project => `<tr>
-          <td><strong>${escapeHtml(project.titulo)}</strong></td>
+          <td><strong><a class="article-link" href="?page=articulo&amp;id=${encodeURIComponent(project.id_proyecto)}">${escapeHtml(project.titulo)}</a></strong></td>
           <td>${escapeHtml(project.areas)}</td>
           <td>${escapeHtml(project.fecha ?? '—')}</td>
           <td><span class="status ${statusClass(project.estado)}">${escapeHtml(statusLabels[project.estado] ?? project.estado)}</span></td>

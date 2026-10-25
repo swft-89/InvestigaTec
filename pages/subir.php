@@ -38,6 +38,8 @@
         maxlength="20000"
         required
         placeholder="Descripción breve del proyecto (objetivos, metodología, resultados esperados)"></textarea>
+      <span class="hint">Al seleccionar el PDF se buscará “Resumen” o “Abstract”; si no se encuentra, se propondrá un resumen del texto. Puedes revisarlo y editarlo antes de enviar.</span>
+      <span id="summary-status" class="hint" role="status" aria-live="polite"></span>
     </label>
 
     <!-- ===== proyectos.id_departamento ===== -->
@@ -55,7 +57,8 @@
       <select name="id_areas[]" multiple required size="5">
         <option value="" disabled>Cargando áreas...</option>
       </select>
-      <span class="hint">Usa Ctrl (o Cmd) para seleccionar varias.</span>
+      <span class="hint">Selecciona hasta 3 áreas. Usa Ctrl (o Cmd) para elegir varias.</span>
+      <span id="areas-limit-message" class="hint" role="status" aria-live="polite"></span>
     </label>
 
     <!-- ===== palabras clave (N:M → proyectos_palabras_clave) ===== -->

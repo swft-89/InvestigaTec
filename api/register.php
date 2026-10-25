@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 require __DIR__ . '/../includes/auth.php';
-require __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../config/database.php';
 post_only(); require_csrf();
 $d = json_input();
 $nombre = trim((string)($d['nombre'] ?? ''));
@@ -30,8 +30,8 @@ try {
     $q = $pdo->prepare('INSERT INTO estudiantes (id_usuario, num_control, id_carrera, semestre) VALUES (:id, :control, :carrera, :semestre)');
     $q->execute(['id'=>$id,'control'=>$control,'carrera'=>$carrera,'semestre'=>$semestre]);
     $pdo->commit();
-    // Se crea la cuenta; el usuario inicia sesión explícitamente después.
-    json_response(201,['message'=>'Cuenta creada. Ahora puedes iniciar sesión.']);
+    // La cuenta queda pendiente; solo un administrador puede aprobarla.
+    json_response(201,['message'=>'Cuenta creada. El administrador debe aprobarla antes de que puedas iniciar sesión.']);
 } catch (PDOException $e) {
     if (isset($pdo) && $pdo->inTransaction()) $pdo->rollBack();
     if ($e->getCode() === '23505') json_response(409,['error'=>'El correo o número de control ya está registrado.']);
