@@ -1,2 +1,38 @@
-import {service} from '../services.js';import {own,escapeHtml,toast} from '../main.js';
-export function initMyArticles(){const tbody=document.querySelector('#my-list');function render(){const list=service.getArticles().filter(own);tbody.innerHTML=list.length?list.map(a=>`<tr><td><strong>${escapeHtml(a.title)}</strong></td><td>${escapeHtml(a.area)}</td><td>${escapeHtml(a.date)}</td><td><span class="status ${a.status==='En revisión'?'review':a.status==='Aprobado'?'approved':'rejected'}">${escapeHtml(a.status)}</span></td><td>${a.version}</td><td class="table-actions">${a.status==='En revisión'?`<button data-edit="${a.id}">Editar</button><button data-delete="${a.id}" class="danger">Eliminar</button>`:'Sin cambios'}</td></tr>`).join(''):'<tr><td colspan="6">Todavía no tienes artículos registrados.</td></tr>';}tbody.addEventListener('click',e=>{let b=e.target.closest('button');if(!b)return;let id=Number(b.dataset.edit??b.dataset.delete),items=service.getArticles(),a=items.find(x=>x.id===id);if(!a||!own(a)||a.status!=='En revisión')return;if(b.dataset.edit){const title=prompt('Nuevo título del artículo:',a.title);if(title===null)return;if(!title.trim())return toast('El título no puede quedar vacío');a.title=title.trim();a.version+=1;toast('Artículo actualizado (demostración)');}else{if(!confirm('¿Eliminar este artículo que está en revisión?'))return;items=items.filter(x=>x.id!==id);toast('Artículo eliminado (demostración)');}service.saveArticles(items);render();});render();}
+import {service} from '../services.js';
+import {escapeHtml} from '../shared.js';
+
+const statusLabels = {
+  BORRADOR: 'Borrador',
+  EN_REVISION: 'En revisión',
+  REQUIERE_CAMBIOS: 'Requiere cambios',
+  APROBADO: 'Aprobado',
+  RECHAZADO: 'Rechazado',
+  PUBLICADO: 'Publicado',
+};
+
+function statusClass(status) {
+  if (status === 'APROBADO' || status === 'PUBLICADO') return 'approved';
+  if (status === 'RECHAZADO') return 'rejected';
+  return 'review';
+}
+
+export async function initMyArticles() {
+  const tbody = document.querySelector('#my-list');
+  if (!tbody) return;
+
+  try {
+    const {projects} = await service.getMyProjects();
+    tbody.innerHTML = projects.length
+      ? projects.map(project => `<tr>
+          <td><strong><a class="article-link" href="?page=articulo&amp;id=${encodeURIComponent(project.id_proyecto)}">${escapeHtml(project.titulo)}</a></strong></td>
+          <td>${escapeHtml(project.areas)}</td>
+          <td>${escapeHtml(project.fecha ?? '—')}</td>
+          <td><span class="status ${statusClass(project.estado)}">${escapeHtml(statusLabels[project.estado] ?? project.estado)}</span></td>
+          <td>${escapeHtml(project.version)}</td>
+          <td>${escapeHtml(project.archivo ?? 'Sin documento')}</td>
+        </tr>`).join('')
+      : '<tr><td colspan="6">Todavía no tienes artículos registrados.</td></tr>';
+  } catch (error) {
+    tbody.innerHTML = `<tr><td colspan="6" role="alert">${escapeHtml(error.message)}</td></tr>`;
+  }
+}

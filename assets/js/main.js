@@ -1,18 +1,65 @@
-import {service} from './services.js';
 import {initDashboard} from './pages/dashboard.js';
 import {initCatalog} from './pages/catalog.js';
 import {initMyArticles} from './pages/my-articles.js';
+import {initArticle} from './pages/article.js';
+import {initPublicArticle} from './pages/public-article.js';
 import {initUpload} from './pages/upload.js';
-import {initProfile} from './pages/profile.js';
 import {initSummaries} from './pages/summaries.js';
 import {initNotifications} from './pages/notifications.js';
+import {initHelp} from './pages/help.js';
+import {initAdmin} from './pages/admin.js';
+import {initReviewProjects} from './pages/review-projects.js';
 import {initAccount} from './pages/account.js';
-export const $=s=>document.querySelector(s);
-export const escapeHtml=s=>String(s??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
-export function toast(text){let el=$('#toast');el.textContent=text;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),3500)}
-export const own=a=>a.owner===service.getUser().email;
-export const accessible=a=>(a.status==='Aprobado'&&a.visibility==='Público')||own(a);
-export function articleCard(a){return `<article class="article"><div class="article-meta"><span class="label">${escapeHtml(a.area)}</span><span>${escapeHtml(a.date)}</span></div><h3>${escapeHtml(a.title)}</h3><p>${escapeHtml(a.description)}</p><div class="article-foot">${escapeHtml(a.author)} · ${escapeHtml(a.status)}</div></article>`}
-const routes={inicio:initDashboard,explorar:initCatalog,'mis-articulos':initMyArticles,subir:initUpload,perfil:initProfile,resumenes:initSummaries,notificaciones:initNotifications,acceso:initAccount};
-const page=document.body.dataset.page;routes[page]?.();$('#account-status').textContent=service.getUser().name;
-$('#menu-toggle')?.addEventListener('click',()=>$('#sidebar').classList.toggle('open'));
+import {$} from './shared.js';
+import {service} from './services.js';
+const routes={inicio:initDashboard,explorar:initCatalog,'mis-articulos':initMyArticles,articulo:initArticle,'detalle-articulo':initPublicArticle,subir:initUpload,resumenes:initSummaries,notificaciones:initNotifications,ayuda:initHelp,admin:initAdmin,revision:initReviewProjects};
+const page=document.body.dataset.page;
+if(page==='perfil'){
+  import(`./pages/profile.js?v=${window.INVESTIGATEC_PROFILE_ASSET_VERSION}`)
+    .then(({initProfile})=>initProfile())
+    .catch(error=>{
+      console.error('No se pudo cargar el perfil.',error);
+      const output=$('#profile-error');
+      if(output)output.textContent='No se pudo cargar el perfil. Recarga la página e inténtalo nuevamente.';
+    });
+}else routes[page]?.();
+initAccount();
+const unreadNotificationsBadge=$('#unread-notifications-count');
+async function refreshUnreadNotifications(){
+  if(!unreadNotificationsBadge||!window.INVESTIGATEC_AUTH_USER)return;
+  try{
+    const {count}=await service.getUnreadNoticeCount();
+    unreadNotificationsBadge.textContent=count>99?'99+':String(count);
+    unreadNotificationsBadge.hidden=count===0;
+    unreadNotificationsBadge.setAttribute('aria-label',`${count} notificaciones sin leer`);
+  }catch(error){
+    console.error('No se pudo consultar el contador de notificaciones.',error);
+  }
+}
+document.addEventListener('notifications:updated',refreshUnreadNotifications);
+refreshUnreadNotifications();
+const sidebar=$('#sidebar');
+const menuToggle=$('#menu-toggle');
+const sidebarBackdrop=$('#sidebar-backdrop');
+const closeSidebar=()=>{
+  sidebar?.classList.remove('open');
+  document.body.classList.remove('sidebar-open');
+  menuToggle?.setAttribute('aria-expanded','false');
+  if(sidebarBackdrop)sidebarBackdrop.hidden=true;
+};
+menuToggle?.addEventListener('click',()=>{
+  const open=!sidebar?.classList.contains('open');
+  sidebar?.classList.toggle('open',open);
+  document.body.classList.toggle('sidebar-open',open);
+  menuToggle.setAttribute('aria-expanded',String(open));
+  if(sidebarBackdrop)sidebarBackdrop.hidden=!open;
+});
+$('#sidebar-close')?.addEventListener('click',closeSidebar);
+sidebarBackdrop?.addEventListener('click',closeSidebar);
+sidebar?.querySelectorAll('a').forEach(link=>link.addEventListener('click',closeSidebar));
+document.addEventListener('keydown',event=>{
+  if(event.key==='Escape'&&sidebar?.classList.contains('open')){
+    closeSidebar();
+    menuToggle?.focus();
+  }
+});

@@ -1,0 +1,21 @@
+# Configuración privada por computadora
+/config/database.local.php
+/.env
+/.env.*
+!/.env.example
+
+# Dependencias, caché y archivos locales
+/vendor/
+/node_modules/
+/.vscode/
+
+# Documentación interna
+/GUIA_BACKEND.md
+/GUIA_INTEGRACION_PASO_A_PASO.md
+
+# Archivo de pruebas local
+/verificar_php.php
+
+# Fotos de perfil cargadas por usuarios
+/uploads/perfiles/*
+!/uploads/perfiles/.gitkeep
