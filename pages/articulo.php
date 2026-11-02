@@ -7,10 +7,10 @@
 <section id="article-content" hidden>
   <div class="section-heading article-detail-heading">
     <?php $articleUser = current_user(); ?>
-    <?php if (($articleUser['type'] ?? '') === 'ESTUDIANTE'): ?>
-      <a class="button secondary" href="?page=mis-articulos">Volver a mis artículos</a>
-    <?php elseif (!empty($articleUser['is_admin'])): ?>
+    <?php if (!empty($articleUser['is_admin'])): ?>
       <a class="button secondary" href="?page=revision">Volver a revisar artículos</a>
+    <?php elseif (($articleUser['type'] ?? '') === 'ESTUDIANTE'): ?>
+      <a class="button secondary" href="?page=mis-articulos">Volver a mis artículos</a>
     <?php endif; ?>
     <button class="button primary" id="edit-article" type="button" hidden>Editar artículo</button>
   </div>

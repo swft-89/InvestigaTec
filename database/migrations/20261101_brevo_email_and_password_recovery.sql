@@ -52,3 +52,9 @@ BEGIN
     RETURN NEW;
 END;
 $$;
+
+DROP TRIGGER IF EXISTS trg_notificar_cambio_estado_proyecto ON proyectos;
+CREATE TRIGGER trg_notificar_cambio_estado_proyecto
+AFTER UPDATE OF estado ON proyectos
+FOR EACH ROW
+EXECUTE FUNCTION notificar_cambio_estado_proyecto();

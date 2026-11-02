@@ -4,11 +4,6 @@ ALTER TABLE ext_notificacion
 CREATE INDEX IF NOT EXISTS ix_ext_notificacion_usuario_fecha
     ON ext_notificacion (id_usuario, fecha_envio DESC);
 
-UPDATE ext_notificacion
-SET estado_envio = 'NO_APLICA'
-WHERE tipo = 'CAMBIO_ESTADO'
-  AND estado_envio <> 'NO_APLICA';
-
 CREATE OR REPLACE FUNCTION notificar_cambio_estado_proyecto()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -42,7 +37,7 @@ BEGIN
         SELECT pa.id_usuario, NEW.id_proyecto, 'CAMBIO_ESTADO',
                'El estado de "' || NEW.titulo || '" cambió de ' ||
                estado_anterior_texto || ' a ' || estado_nuevo_texto || '.',
-               'NO_APLICA'
+               'PENDIENTE'
         FROM proyectos_autores pa
         WHERE pa.id_proyecto = NEW.id_proyecto
           AND pa.tipo_participacion = 'AUTOR';
