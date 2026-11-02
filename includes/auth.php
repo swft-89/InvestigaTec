@@ -44,7 +44,7 @@ function current_user(): ?array
     $_SESSION['user']['email'] = $account['correo'];
     $_SESSION['user']['type'] = $account['tipo_usuario'];
     $_SESSION['user']['is_admin'] = filter_var($account['ext_administrador'], FILTER_VALIDATE_BOOLEAN)
-        && strtolower((string)$account['correo']) === 'admin@investigatec.mx';
+        && strtolower((string)$account['correo']) === 'investigatec00@gmail.com';
     $user = $_SESSION['user'];
     return $user;
 }
@@ -86,6 +86,6 @@ function login_user(array $u): void {
         'type' => $u['tipo_usuario'],
         'portrait' => $u['imagen_perfil'] ?? null,
         'is_admin' => filter_var($u['ext_administrador'] ?? false, FILTER_VALIDATE_BOOLEAN)
-            && strtolower((string)$u['correo']) === 'admin@investigatec.mx',
+            && strtolower((string)$u['correo']) === 'investigatec00@gmail.com',
     ];
 }

@@ -11,7 +11,7 @@ function require_admin(PDO $pdo): array
     $query = $pdo->prepare(
         "SELECT id_usuario FROM usuarios
          WHERE id_usuario = :id
-           AND LOWER(correo) = 'admin@investigatec.mx'
+           AND LOWER(correo) = 'investigatec00@gmail.com'
            AND ext_administrador IS TRUE
            AND ext_aprobada IS TRUE
            AND estado_cuenta = 'ACTIVA'"

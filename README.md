@@ -23,14 +23,14 @@ El acceso, registro, edición del perfil y alta de investigaciones usan PostgreS
 
 La página Ayuda y soporte incluye preguntas frecuentes y un formulario para registrar solicitudes en `ext_ayuda_sugerencias`. Ejecuta `database/migrations/20261024_support_requests.sql` en PostgreSQL después de crear el esquema base; la tabla admite envíos de invitados y vincula los de usuarios autenticados.
 
-El panel `?page=admin` solo se muestra a la cuenta configurada como administradora y sus endpoints comprueban también el correo `admin@investigatec.mx`, su marca administrativa, aprobación y estado activo. Después del esquema base, ejecuta las migraciones en este orden: `20261018_article_status_notifications.sql`, `20261024_support_requests.sql` y `20261025_admin_moderation.sql`. Genera un hash de contraseña localmente con PHP y provisiona la cuenta administradora manualmente; el script público de registro nunca asigna privilegios:
+El panel `?page=admin` solo se muestra a la cuenta configurada como administradora y sus endpoints comprueban también el correo `investigatec00@gmail.com`, su marca administrativa, aprobación y estado activo. Después del esquema base, ejecuta las migraciones en este orden: `20261018_article_status_notifications.sql`, `20261024_support_requests.sql` y `20261025_admin_moderation.sql`. Genera un hash de contraseña localmente con PHP y provisiona la cuenta administradora manualmente; el script público de registro nunca asigna privilegios:
 
 ```sql
 INSERT INTO usuarios
     (nombre, apellido_paterno, correo, password_hash, tipo_usuario,
      estado_cuenta, ext_aprobada, ext_administrador)
 VALUES
-    ('Administrador', 'InvestigaTec', 'admin@investigatec.mx',
+    ('Administrador', 'InvestigaTec', 'investigatec00@gmail.com',
      '<HASH_GENERADO_LOCALMENTE>', 'DOCENTE', 'ACTIVA', TRUE, TRUE)
 ON CONFLICT (correo) DO UPDATE SET
     password_hash = EXCLUDED.password_hash,

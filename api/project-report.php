@@ -63,7 +63,7 @@ try {
     $report->execute(['proyecto' => $projectId, 'usuario' => $user['id'], 'motivo' => $reason]);
     $admins = $pdo->query(
         "SELECT id_usuario FROM usuarios
-         WHERE LOWER(correo) = 'admin@investigatec.mx'
+         WHERE LOWER(correo) = 'investigatec00@gmail.com'
            AND ext_administrador IS TRUE AND ext_aprobada IS TRUE
            AND estado_cuenta = 'ACTIVA'"
     )->fetchAll(PDO::FETCH_COLUMN);

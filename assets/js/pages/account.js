@@ -70,7 +70,7 @@ export function initAccount() {
     try {
       await service.login({correo:login.elements.email.value.trim(), password:login.elements.password.value});
       toast('Sesión iniciada');
-      location.href = login.elements.email.value.trim().toLowerCase() === 'admin@investigatec.mx'
+      location.href = login.elements.email.value.trim().toLowerCase() === 'investigatec00@gmail.com'
         ? '?page=admin'
         : '?page=inicio';
     } catch (error) { message('login-error', error.message); }
