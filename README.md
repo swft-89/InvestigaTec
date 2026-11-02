@@ -44,3 +44,37 @@ Para generar el valor de `password_hash`, ejecuta localmente `php -r '$p = readl
 Las cuentas nuevas quedan pendientes hasta su aprobación. La suspensión invalida la sesión activa y bloquea nuevos inicios de sesión. Los docentes tienen una sección de revisión donde pueden consultar artículos no publicados y enviar reportes; el administrador recibe esos reportes en su panel y en sus notificaciones. Las respuestas a usuarios registrados aparecen en sus notificaciones; las solicitudes de invitados quedan respondidas y almacenadas en el panel, pero requieren integrar correo para que el invitado reciba la respuesta.
 
 Al seleccionar un PDF en el formulario de subida, PDF.js extrae su texto localmente en el navegador. El sistema busca una sección “Resumen” o “Abstract”; si no la encuentra, propone un resumen extractivo basado en las oraciones y términos más relevantes. El campo queda editable antes de enviar. Para instalar la dependencia del navegador ejecuta `npm ci` en la raíz del proyecto; los archivos del PDF no se envían para generar el resumen.
+
+## Despliegue en Render con Docker
+
+El contenedor usa PHP 8.3 con Apache y `pdo_pgsql`. Render debe recibir los archivos subidos en un disco persistente; sin él, las fotos y los PDF se pierden al reiniciar o volver a desplegar.
+
+1. Confirma que tienes la rama actualizada y súbela a GitHub:
+
+   ```sh
+   git switch b
+   git pull origin b
+   git push origin b
+   ```
+
+   `origin/b` es la referencia remota; al conectar Render, selecciona la rama `b`.
+2. En Render crea una base **PostgreSQL** y un **Web Service** conectado al repositorio `swft-89/InvestigaTec`. Selecciona la rama `b`, el runtime **Docker** y deja el Dockerfile en la ruta raíz (`Dockerfile`). No necesitas comandos personalizados de build o inicio.
+3. En las variables de entorno del Web Service configura `DATABASE_URL` con la URL interna de PostgreSQL de Render. Puedes vincularla desde el panel de Render para no copiar credenciales a GitHub. El contenedor escucha en el puerto definido por `PORT` (por defecto `10000`).
+4. Inicializa la base una sola vez, conectándote con un cliente PostgreSQL y ejecutando, en este orden:
+   - `database/schema.sql`
+   - `database/migrations/20261018_article_status_notifications.sql`
+   - `database/migrations/20261024_support_requests.sql`
+   - `database/migrations/20261025_admin_moderation.sql`
+
+   `database/seed_desarrollo.sql` contiene datos de ejemplo local: no lo uses como catálogo de producción. Carga los departamentos y carreras oficiales antes de habilitar registros. Provisiona también la cuenta administradora con el procedimiento descrito arriba.
+5. En la configuración del Web Service agrega un **Persistent Disk** con punto de montaje `/var/www/html/uploads`. El plan de Render debe permitir discos persistentes. Ese directorio guarda las imágenes de perfil y los PDF; no se incluye el contenido local de `uploads/` en la imagen Docker. Los discos persistentes están asociados a una instancia, así que mantén una sola instancia del servicio mientras almacenes las cargas allí.
+6. Despliega y revisa los logs del servicio. Cada push posterior a `b` iniciará un nuevo despliegue. Mantén `DATABASE_URL` como variable privada y haz respaldo de la base y del disco según la política de datos de tu proyecto.
+
+Para comprobar la imagen localmente, si tienes Docker instalado:
+
+```sh
+docker build -t investigatec .
+docker run --rm -p 8080:10000 -e PORT=10000 investigatec
+```
+
+Abre `http://localhost:8080`. Para probar funciones conectadas a PostgreSQL, configura también `DATABASE_URL` en el contenedor.
