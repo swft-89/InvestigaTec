@@ -2,6 +2,7 @@
 declare(strict_types=1);
 require __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../includes/brevo.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     header('Allow: GET');
@@ -69,6 +70,7 @@ try {
         $stats = array_map('intval', $stats);
     }
     $pdo->commit();
+    dispatch_pending_notification_emails($pdo);
     json_response(200, ['articles' => $articles, 'stats' => $stats]);
 } catch (Throwable $error) {
     if (isset($pdo) && $pdo instanceof PDO && $pdo->inTransaction()) $pdo->rollBack();

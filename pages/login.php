@@ -12,4 +12,5 @@
   </label>
   <button class="button primary" type="submit">Entrar</button>
   <p id="login-error" role="alert" aria-live="polite"></p>
+  <p><a href="?page=recuperar">¿Olvidaste tu contraseña?</a></p>
 </form>

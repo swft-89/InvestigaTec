@@ -10,9 +10,10 @@ import {initHelp} from './pages/help.js';
 import {initAdmin} from './pages/admin.js';
 import {initReviewProjects} from './pages/review-projects.js';
 import {initAccount} from './pages/account.js';
+import {initPasswordRecovery} from './pages/password-recovery.js';
 import {$} from './shared.js';
 import {service} from './services.js';
-const routes={inicio:initDashboard,explorar:initCatalog,'mis-articulos':initMyArticles,articulo:initArticle,'detalle-articulo':initPublicArticle,subir:initUpload,resumenes:initSummaries,notificaciones:initNotifications,ayuda:initHelp,admin:initAdmin,revision:initReviewProjects};
+const routes={inicio:initDashboard,explorar:initCatalog,'mis-articulos':initMyArticles,articulo:initArticle,'detalle-articulo':initPublicArticle,subir:initUpload,resumenes:initSummaries,notificaciones:initNotifications,ayuda:initHelp,admin:initAdmin,revision:initReviewProjects,recuperar:initPasswordRecovery};
 const page=document.body.dataset.page;
 if(page==='perfil'){
   import(`./pages/profile.js?v=${window.INVESTIGATEC_PROFILE_ASSET_VERSION}`)

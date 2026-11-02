@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 require __DIR__ . '/../includes/admin.php';
+require_once __DIR__ . '/../includes/brevo.php';
 
 $user = current_user();
 if (!$user) json_response(401, ['error' => 'Inicia sesión con la cuenta administradora.']);
@@ -155,6 +156,7 @@ try {
             ]);
         }
         $pdo->commit();
+        if ($previous !== $status) dispatch_pending_notification_emails($pdo, $projectId);
         json_response(200, ['message' => 'Estado del artículo actualizado.']);
     }
 
@@ -180,7 +182,8 @@ try {
         $reply = trim($reply);
         $pdo->beginTransaction();
         $requestQuery = $pdo->prepare(
-            'SELECT id_solicitud, id_usuario, asunto FROM ext_ayuda_sugerencias
+            'SELECT id_solicitud, id_usuario, nombre_contacto, correo_contacto, asunto
+             FROM ext_ayuda_sugerencias
              WHERE id_solicitud = :id FOR UPDATE'
         );
         $requestQuery->execute(['id' => $requestId]);
@@ -199,17 +202,40 @@ try {
             $notification = $pdo->prepare(
                 "INSERT INTO ext_notificacion
                     (id_usuario, id_solicitud_ayuda, tipo, mensaje, estado_envio)
-                 VALUES (:usuario, :solicitud, 'RESPUESTA_AYUDA', :mensaje, 'NO_APLICA')"
+                 VALUES (:usuario, :solicitud, 'RESPUESTA_AYUDA', :mensaje, 'PENDIENTE')
+                 RETURNING id_notificacion"
             );
             $notification->execute([
                 'usuario' => $request['id_usuario'], 'solicitud' => $requestId,
                 'mensaje' => 'El administrador respondió a tu solicitud "' . $request['asunto'] . '": ' . $reply,
             ]);
+            $notificationId = (int)$notification->fetchColumn();
         }
         $pdo->commit();
+        if ($request['id_usuario'] !== null) {
+            dispatch_notification_email($pdo, $notificationId);
+        } else {
+            try {
+                $escapedReply = htmlspecialchars($reply, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+                brevo_send_email(
+                    (string)$request['correo_contacto'],
+                    (string)$request['nombre_contacto'],
+                    'Respuesta a tu solicitud · InvestigaTec',
+                    '<p>Respondimos tu solicitud "' .
+                        htmlspecialchars((string)$request['asunto'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') .
+                        '".</p><p>' . nl2br($escapedReply, false) . '</p>',
+                    'Respondimos tu solicitud "' . $request['asunto'] . "\":\n\n" . $reply
+                );
+            } catch (Throwable $mailError) {
+                error_log('InvestigaTec correo de respuesta de soporte: ' . $mailError->getMessage());
+                json_response(200, [
+                    'message' => 'La respuesta quedó guardada, pero no se pudo enviar el correo. Revisa la configuración de Brevo.',
+                ]);
+            }
+        }
         json_response(200, [
             'message' => $request['id_usuario'] === null
-                ? 'Respuesta guardada. Esta solicitud fue enviada como invitado, por lo que no tiene una cuenta asociada para recibir una notificación interna.'
+                ? 'Respuesta guardada y enviada por correo.'
                 : 'Respuesta enviada y notificación creada.',
         ]);
     }

@@ -2,6 +2,7 @@
 declare(strict_types=1);
 require __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../includes/brevo.php';
 
 $user = current_user();
 if (!$user) json_response(401, ['error' => 'Inicia sesión para reportar un artículo.']);
@@ -72,16 +73,22 @@ try {
     }
     $notify = $pdo->prepare(
         "INSERT INTO ext_notificacion (id_usuario, id_proyecto, tipo, mensaje, estado_envio)
-         VALUES (:admin, :proyecto, 'REPORTE_ARTICULO', :mensaje, 'NO_APLICA')"
+         VALUES (:admin, :proyecto, 'REPORTE_ARTICULO', :mensaje, 'PENDIENTE')
+         RETURNING id_notificacion"
     );
     $reporterType = !empty($user['is_admin']) ? 'administrador' : 'docente';
+    $notificationIds = [];
     foreach ($admins as $adminId) {
         $notify->execute([
             'admin' => $adminId, 'proyecto' => $projectId,
             'mensaje' => 'Un ' . $reporterType . ' reportó el artículo "' . $project['titulo'] . '". Revisa el caso en Administración.',
         ]);
+        $notificationIds[] = (int)$notify->fetchColumn();
     }
     $pdo->commit();
+    foreach ($notificationIds as $notificationId) {
+        dispatch_notification_email($pdo, $notificationId);
+    }
     json_response(201, ['message' => 'Reporte enviado al administrador para su revisión.']);
 } catch (Throwable $error) {
     if (isset($pdo) && $pdo instanceof PDO && $pdo->inTransaction()) $pdo->rollBack();

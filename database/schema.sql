@@ -223,7 +223,8 @@ CREATE TABLE ext_recuperacion_acceso (
         REFERENCES usuarios(id_usuario) ON DELETE CASCADE,
     token_hash       TEXT NOT NULL,
     fecha_expiracion TIMESTAMPTZ NOT NULL,
-    usado            BOOLEAN NOT NULL DEFAULT FALSE
+    usado            BOOLEAN NOT NULL DEFAULT FALSE,
+    solicitado_en    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE ext_version_proyecto (

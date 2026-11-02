@@ -2,6 +2,7 @@
 declare(strict_types=1);
 require __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../includes/brevo.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     header('Allow: GET');
@@ -64,6 +65,7 @@ try {
         json_response(404, ['error' => 'No se encontró un artículo publicado con ese identificador.']);
     }
     $pdo->commit();
+    dispatch_pending_notification_emails($pdo, $projectId);
     $project['tiene_documento'] = filter_var($project['tiene_documento'], FILTER_VALIDATE_BOOLEAN);
     json_response(200, ['project' => $project]);
 } catch (Throwable $error) {

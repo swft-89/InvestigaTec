@@ -3,6 +3,7 @@ declare(strict_types=1);
 require __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../includes/cloudinary.php';
+require_once __DIR__ . '/../includes/brevo.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     header('Allow: GET');
@@ -33,6 +34,7 @@ try {
     $query->execute(['proyecto' => $projectId]);
     $file = $query->fetch();
     $pdo->commit();
+    dispatch_pending_notification_emails($pdo, $projectId);
     if (!$file) json_response(404, ['error' => 'No se encontró el documento de este artículo publicado.']);
 
     $relativePath = $file['ruta_archivo'];
