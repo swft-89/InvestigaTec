@@ -34,7 +34,7 @@ function brevo_send_email(string $email, string $name, string $subject, string $
         CURLOPT_HTTPHEADER => [
             'accept: application/json',
             'api-key: ' . trim($apiKey),
-            'content-type: application/json',
+            'content-type: application/json; charset=utf-8',
         ],
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_CONNECTTIMEOUT => 5,

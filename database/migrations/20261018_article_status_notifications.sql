@@ -15,7 +15,7 @@ BEGIN
     IF OLD.estado IS DISTINCT FROM NEW.estado THEN
         estado_anterior_texto := CASE OLD.estado
             WHEN 'BORRADOR' THEN 'Borrador'
-            WHEN 'EN_REVISION' THEN 'En revisión'
+            WHEN 'EN_REVISION' THEN U&'En revisi\00f3n'
             WHEN 'REQUIERE_CAMBIOS' THEN 'Requiere cambios'
             WHEN 'APROBADO' THEN 'Aprobado'
             WHEN 'RECHAZADO' THEN 'Rechazado'
@@ -24,7 +24,7 @@ BEGIN
         END;
         estado_nuevo_texto := CASE NEW.estado
             WHEN 'BORRADOR' THEN 'Borrador'
-            WHEN 'EN_REVISION' THEN 'En revisión'
+            WHEN 'EN_REVISION' THEN U&'En revisi\00f3n'
             WHEN 'REQUIERE_CAMBIOS' THEN 'Requiere cambios'
             WHEN 'APROBADO' THEN 'Aprobado'
             WHEN 'RECHAZADO' THEN 'Rechazado'
@@ -35,7 +35,7 @@ BEGIN
         INSERT INTO ext_notificacion
             (id_usuario, id_proyecto, tipo, mensaje, estado_envio)
         SELECT pa.id_usuario, NEW.id_proyecto, 'CAMBIO_ESTADO',
-               'El estado de "' || NEW.titulo || '" cambió de ' ||
+               'El estado de "' || NEW.titulo || '" cambi' || U&'\00f3' || ' de ' ||
                estado_anterior_texto || ' a ' || estado_nuevo_texto || '.',
                'PENDIENTE'
         FROM proyectos_autores pa
