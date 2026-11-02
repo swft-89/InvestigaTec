@@ -2,6 +2,7 @@
 declare(strict_types=1);
 require __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../includes/cloudinary.php';
 
 $user = current_user();
 if (!$user) json_response(401, ['error' => 'Inicia sesión para consultar tu perfil.']);
@@ -55,6 +56,7 @@ if ($nombre === '' || mb_strlen($nombre) > 100 || $paterno === '' || mb_strlen($
 
 $pdo = null;
 $newPhoto = null;
+$newCloudinaryPublicId = null;
 try {
     $pdo = db();
     $careerQuery = $pdo->prepare('SELECT 1 FROM carreras WHERE id_carrera = :id AND activa IS TRUE');
@@ -72,22 +74,43 @@ try {
         if (!$imageInfo || !isset($extensions[$mime]) || $imageInfo['mime'] !== $mime) {
             json_response(422, ['error' => 'Selecciona una imagen JPG o PNG válida.']);
         }
-        $directory = __DIR__ . '/../uploads/perfiles';
-        if (!is_dir($directory) && !mkdir($directory, 0755, true) && !is_dir($directory)) {
-            throw new RuntimeException('No se pudo crear el directorio para las fotos de perfil.');
+        if (investigatec_cloudinary()) {
+            $newCloudinaryPublicId = 'investigatec/profiles/' . $user['id'] . '/' . bin2hex(random_bytes(16));
+            $upload = investigatec_cloudinary_upload(
+                $file['tmp_name'],
+                $newCloudinaryPublicId,
+                'image',
+                'upload'
+            );
+            if (!is_string($upload['secure_url'] ?? null) || $upload['secure_url'] === '') {
+                throw new RuntimeException('Cloudinary no devolvió la URL segura de la foto.');
+            }
+            $newPhoto = $upload['secure_url'];
+        } else {
+            $directory = __DIR__ . '/../uploads/perfiles';
+            if (!is_dir($directory) && !mkdir($directory, 0755, true) && !is_dir($directory)) {
+                throw new RuntimeException('No se pudo crear el directorio para las fotos de perfil.');
+            }
+            $filename = bin2hex(random_bytes(16)) . '.' . $extensions[$mime];
+            if (!move_uploaded_file($file['tmp_name'], $directory . '/' . $filename)) {
+                throw new RuntimeException('No se pudo almacenar la foto de perfil.');
+            }
+            $newPhoto = 'uploads/perfiles/' . $filename;
         }
-        $filename = bin2hex(random_bytes(16)) . '.' . $extensions[$mime];
-        if (!move_uploaded_file($file['tmp_name'], $directory . '/' . $filename)) {
-            throw new RuntimeException('No se pudo almacenar la foto de perfil.');
-        }
-        $newPhoto = 'uploads/perfiles/' . $filename;
     }
 
     $pdo->beginTransaction();
-    $existingPhotoQuery = $pdo->prepare('SELECT imagen_perfil FROM ext_estudiante_perfil WHERE id_usuario = :id FOR UPDATE');
+    $existingPhotoQuery = $pdo->prepare(
+        'SELECT imagen_perfil, ext_cloudinary_public_id
+         FROM ext_estudiante_perfil WHERE id_usuario = :id FOR UPDATE'
+    );
     $existingPhotoQuery->execute(['id' => $user['id']]);
-    $oldPhoto = $existingPhotoQuery->fetchColumn() ?: null;
+    $existingProfile = $existingPhotoQuery->fetch();
+    $oldPhoto = $existingProfile['imagen_perfil'] ?? null;
+    $oldCloudinaryPublicId = $existingProfile['ext_cloudinary_public_id'] ?? null;
     $photo = $newPhoto ?? $oldPhoto;
+    $cloudinaryPublicIdForProfile = $newCloudinaryPublicId
+        ?? ($newPhoto === null ? $oldCloudinaryPublicId : null);
 
     $updateUser = $pdo->prepare(
         'UPDATE usuarios SET nombre = :nombre, apellido_paterno = :paterno,
@@ -105,15 +128,18 @@ try {
         'control' => $control, 'carrera' => $carrera, 'semestre' => $semestre, 'id' => $user['id'],
     ]);
     $updateProfile = $pdo->prepare(
-        'INSERT INTO ext_estudiante_perfil (id_usuario, generacion, habilidad, intereses, imagen_perfil)
-         VALUES (:id, :generacion, :habilidad, :intereses, :foto)
+        'INSERT INTO ext_estudiante_perfil
+            (id_usuario, generacion, habilidad, intereses, imagen_perfil, ext_cloudinary_public_id)
+         VALUES (:id, :generacion, :habilidad, :intereses, :foto, :cloudinary_public_id)
          ON CONFLICT (id_usuario) DO UPDATE SET generacion = EXCLUDED.generacion,
          habilidad = EXCLUDED.habilidad, intereses = EXCLUDED.intereses,
-         imagen_perfil = EXCLUDED.imagen_perfil'
+         imagen_perfil = EXCLUDED.imagen_perfil,
+         ext_cloudinary_public_id = EXCLUDED.ext_cloudinary_public_id'
     );
     $updateProfile->execute([
         'id' => $user['id'], 'generacion' => $generacion ?: null,
         'habilidad' => $habilidad ?: null, 'intereses' => $intereses ?: null, 'foto' => $photo,
+        'cloudinary_public_id' => $cloudinaryPublicIdForProfile,
     ]);
     $pdo->commit();
 
@@ -125,16 +151,39 @@ try {
         $oldPath = __DIR__ . '/../' . $oldPhoto;
         if (is_file($oldPath)) unlink($oldPath);
     }
+    if ($newCloudinaryPublicId && is_string($oldCloudinaryPublicId) && $oldCloudinaryPublicId !== '') {
+        try {
+            investigatec_cloudinary_delete($oldCloudinaryPublicId, 'image', 'upload');
+        } catch (Throwable $cleanupError) {
+            error_log('InvestigaTec eliminar foto anterior de Cloudinary: ' . $cleanupError->getMessage());
+        }
+    }
     json_response(200, ['message' => 'Perfil actualizado correctamente.']);
 } catch (PDOException $error) {
     if ($pdo instanceof PDO && $pdo->inTransaction()) $pdo->rollBack();
-    if ($newPhoto && is_file(__DIR__ . '/../' . $newPhoto)) unlink(__DIR__ . '/../' . $newPhoto);
+    if ($newPhoto && str_starts_with($newPhoto, 'uploads/perfiles/') &&
+        is_file(__DIR__ . '/../' . $newPhoto)) unlink(__DIR__ . '/../' . $newPhoto);
+    if ($newCloudinaryPublicId) {
+        try {
+            investigatec_cloudinary_delete($newCloudinaryPublicId, 'image', 'upload');
+        } catch (Throwable $cleanupError) {
+            error_log('InvestigaTec limpiar foto de Cloudinary: ' . $cleanupError->getMessage());
+        }
+    }
     if ($error->getCode() === '23505') json_response(409, ['error' => 'El correo o número de control ya está registrado.']);
     error_log('InvestigaTec actualizar perfil: ' . $error->getMessage());
     json_response(500, ['error' => 'No fue posible guardar el perfil.']);
 } catch (Throwable $error) {
     if ($pdo instanceof PDO && $pdo->inTransaction()) $pdo->rollBack();
-    if ($newPhoto && is_file(__DIR__ . '/../' . $newPhoto)) unlink(__DIR__ . '/../' . $newPhoto);
+    if ($newPhoto && str_starts_with($newPhoto, 'uploads/perfiles/') &&
+        is_file(__DIR__ . '/../' . $newPhoto)) unlink(__DIR__ . '/../' . $newPhoto);
+    if ($newCloudinaryPublicId) {
+        try {
+            investigatec_cloudinary_delete($newCloudinaryPublicId, 'image', 'upload');
+        } catch (Throwable $cleanupError) {
+            error_log('InvestigaTec limpiar foto de Cloudinary: ' . $cleanupError->getMessage());
+        }
+    }
     error_log('InvestigaTec actualizar perfil: ' . $error->getMessage());
     json_response(500, ['error' => 'No fue posible guardar el perfil.']);
 }

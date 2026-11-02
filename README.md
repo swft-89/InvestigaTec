@@ -65,10 +65,12 @@ El contenedor usa PHP 8.3 con Apache y `pdo_pgsql`. En el plan gratuito el siste
    - `database/migrations/20261018_article_status_notifications.sql`
    - `database/migrations/20261024_support_requests.sql`
    - `database/migrations/20261025_admin_moderation.sql`
+   - `database/migrations/20261101_cloudinary_profile_photos.sql`
 
    `database/seed_desarrollo.sql` contiene datos de ejemplo local: no lo uses como catálogo de producción. Carga los departamentos y carreras oficiales antes de habilitar registros. Provisiona también la cuenta administradora con el procedimiento descrito arriba.
-5. Para conservar cargas nuevas, configura un servicio de almacenamiento externo compatible con tu presupuesto y adapta la aplicación para subir y recuperar desde ese servicio. Un Persistent Disk montado en `/var/www/html/uploads` también funciona, pero requiere un plan de Render que lo permita. Los archivos que ya están versionados bajo `uploads/proyectos/` se incluyen en la imagen; las fotos de perfil están excluidas de Git y deben recuperarse desde una copia de respaldo. No agregues fotos privadas ni cargas de usuarios al repositorio.
-6. Despliega y revisa los logs del servicio. Cada push posterior a `b` iniciará un nuevo despliegue. Mantén `DATABASE_URL` como variable privada y haz respaldo de la base y del disco según la política de datos de tu proyecto.
+5. Configura en Render las variables secretas `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY` y `CLOUDINARY_API_SECRET`. El proyecto usa el SDK PHP de Cloudinary, instalado con Composer durante la construcción de Docker (`composer install` para desarrollo local). Las fotos de perfil se guardan como imágenes seguras HTTPS y los PDF como recursos autenticados; sus descargas pasan por la sesión de la aplicación y usan enlaces firmados de corta duración. No expongas `CLOUDINARY_API_SECRET` en GitHub ni en el navegador.
+6. Las cargas creadas después del despliegue se almacenan en Cloudinary. Los PDF locales ya existentes siguen usando su ruta anterior y no se migran automáticamente; asegúrate de que estén presentes en la imagen o vuelve a subirlos. Las fotos de perfil locales tampoco se migran automáticamente: hay que recuperarlas desde respaldo y volver a cargarlas desde cada perfil. No agregues fotos privadas ni cargas de usuarios al repositorio.
+7. Despliega y revisa los logs del servicio. Cada push posterior a `b` iniciará un nuevo despliegue. Mantén `DATABASE_URL` y las credenciales de Cloudinary como variables privadas, y respalda la base de datos según tu política de conservación.
 
 Para comprobar la imagen localmente, si tienes Docker instalado:
 

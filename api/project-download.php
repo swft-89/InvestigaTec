@@ -2,6 +2,7 @@
 declare(strict_types=1);
 require __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../includes/cloudinary.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     header('Allow: GET');
@@ -35,6 +36,13 @@ try {
     if (!$file) json_response(404, ['error' => 'No se encontró el documento de este artículo publicado.']);
 
     $relativePath = $file['ruta_archivo'];
+    $cloudinaryUrl = investigatec_cloudinary_pdf_url($relativePath);
+    if ($cloudinaryUrl !== null) {
+        header('Cache-Control: no-store');
+        header('Referrer-Policy: no-referrer');
+        header('Location: ' . $cloudinaryUrl, true, 302);
+        exit;
+    }
     $expectedPrefix = 'uploads/proyectos/' . $projectId . '/';
     if (!is_string($relativePath) || !str_starts_with($relativePath, $expectedPrefix) ||
         basename($relativePath) !== substr($relativePath, strlen($expectedPrefix))) {

@@ -3,9 +3,14 @@ FROM php:8.3-apache
 ENV PORT=10000
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends libpq-dev libonig-dev \
-    && docker-php-ext-install mbstring pdo_pgsql \
+    && apt-get install -y --no-install-recommends libpq-dev libonig-dev libcurl4-openssl-dev \
+    && docker-php-ext-install curl mbstring pdo_pgsql \
     && rm -rf /var/lib/apt/lists/*
+
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+COPY composer.json composer.lock /var/www/html/
+RUN composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader \
+    --working-dir=/var/www/html
 
 RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini" \
     && printf "upload_max_filesize=21M\npost_max_size=22M\nmax_execution_time=60\n" \

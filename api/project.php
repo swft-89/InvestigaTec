@@ -2,6 +2,7 @@
 declare(strict_types=1);
 require __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../includes/cloudinary.php';
 
 $user = current_user();
 if (!$user) json_response(401, ['error' => 'Inicia sesión para consultar este artículo.']);
@@ -199,6 +200,7 @@ if ($hasPdf) {
 
 $pdo = null;
 $storedPath = null;
+$cloudinaryPublicId = null;
 try {
     $pdo = db();
     $departmentQuery = $pdo->prepare('SELECT 1 FROM departamentos WHERE id_departamento = :id');
@@ -270,16 +272,23 @@ try {
     }
 
     if ($hasPdf) {
-        $directory = __DIR__ . '/../uploads/proyectos/' . $projectId;
-        if (!is_dir($directory) && !mkdir($directory, 0755, true) && !is_dir($directory)) {
-            throw new RuntimeException('No se pudo crear el directorio para almacenar el PDF.');
+        if (investigatec_cloudinary()) {
+            $cloudinaryPublicId = 'investigatec/projects/' . $projectId . '/' . bin2hex(random_bytes(16));
+            investigatec_cloudinary_upload($pdf['tmp_name'], $cloudinaryPublicId, 'image', 'authenticated');
+            $storedName = basename($cloudinaryPublicId) . '.pdf';
+            $storedPath = 'cloudinary:authenticated:image:' . $cloudinaryPublicId;
+        } else {
+            $directory = __DIR__ . '/../uploads/proyectos/' . $projectId;
+            if (!is_dir($directory) && !mkdir($directory, 0755, true) && !is_dir($directory)) {
+                throw new RuntimeException('No se pudo crear el directorio para almacenar el PDF.');
+            }
+            $storedName = bin2hex(random_bytes(16)) . '.pdf';
+            $physicalPath = $directory . '/' . $storedName;
+            if (!move_uploaded_file($pdf['tmp_name'], $physicalPath)) {
+                throw new RuntimeException('No se pudo almacenar el PDF del proyecto.');
+            }
+            $storedPath = 'uploads/proyectos/' . $projectId . '/' . $storedName;
         }
-        $storedName = bin2hex(random_bytes(16)) . '.pdf';
-        $physicalPath = $directory . '/' . $storedName;
-        if (!move_uploaded_file($pdf['tmp_name'], $physicalPath)) {
-            throw new RuntimeException('No se pudo almacenar el PDF del proyecto.');
-        }
-        $storedPath = 'uploads/proyectos/' . $projectId . '/' . $storedName;
         $pdo->prepare(
             'INSERT INTO archivos
                 (id_proyecto, nombre_original, nombre_almacenado, tipo_mime, tamanio, ruta_archivo, subido_por)
@@ -304,12 +313,28 @@ try {
     json_response(200, ['message' => 'Artículo actualizado correctamente.']);
 } catch (PDOException $error) {
     if ($pdo instanceof PDO && $pdo->inTransaction()) $pdo->rollBack();
-    if ($storedPath && is_file(__DIR__ . '/../' . $storedPath)) unlink(__DIR__ . '/../' . $storedPath);
+    if ($storedPath && str_starts_with($storedPath, 'uploads/') &&
+        is_file(__DIR__ . '/../' . $storedPath)) unlink(__DIR__ . '/../' . $storedPath);
+    if ($cloudinaryPublicId) {
+        try {
+            investigatec_cloudinary_delete($cloudinaryPublicId, 'image', 'authenticated');
+        } catch (Throwable $cleanupError) {
+            error_log('InvestigaTec limpiar PDF de Cloudinary: ' . $cleanupError->getMessage());
+        }
+    }
     error_log('InvestigaTec actualizar artículo: ' . $error->getMessage());
     json_response(500, ['error' => 'No fue posible guardar los cambios del artículo.']);
 } catch (Throwable $error) {
     if ($pdo instanceof PDO && $pdo->inTransaction()) $pdo->rollBack();
-    if ($storedPath && is_file(__DIR__ . '/../' . $storedPath)) unlink(__DIR__ . '/../' . $storedPath);
+    if ($storedPath && str_starts_with($storedPath, 'uploads/') &&
+        is_file(__DIR__ . '/../' . $storedPath)) unlink(__DIR__ . '/../' . $storedPath);
+    if ($cloudinaryPublicId) {
+        try {
+            investigatec_cloudinary_delete($cloudinaryPublicId, 'image', 'authenticated');
+        } catch (Throwable $cleanupError) {
+            error_log('InvestigaTec limpiar PDF de Cloudinary: ' . $cleanupError->getMessage());
+        }
+    }
     error_log('InvestigaTec actualizar artículo: ' . $error->getMessage());
     json_response(500, ['error' => 'No fue posible guardar los cambios del artículo.']);
 }

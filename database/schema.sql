@@ -268,7 +268,8 @@ CREATE TABLE ext_estudiante_perfil (
     generacion    VARCHAR(20),
     habilidad     TEXT,
     intereses     TEXT,
-    imagen_perfil TEXT
+    imagen_perfil TEXT,
+    ext_cloudinary_public_id TEXT
 );
 
 -- ============================================================
