@@ -806,6 +806,28 @@ button {
     padding: 24px
 }
 
+.admin-list-controls {
+    display: flex;
+    align-items: center;
+    gap: 14px
+}
+
+.admin-list-controls label {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    color: var(--muted);
+    font-size: 12px
+}
+
+.admin-list-controls select {
+    padding: 6px 8px;
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    background: #fff;
+    color: var(--text)
+}
+
 .admin-table {
     width: 100%;
     min-width: 760px;
@@ -846,6 +868,68 @@ button {
 
 .admin-record:last-child {
     border-bottom: 0
+}
+
+.support-request-card {
+    width: 100%;
+    display: grid;
+    grid-template-columns: minmax(160px, 2fr) minmax(120px, 1fr) minmax(160px, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border: 0;
+    border-bottom: 1px solid var(--line);
+    background: #fff;
+    color: var(--text);
+    text-align: left
+}
+
+.support-request-card:hover,
+.support-request-card:focus-visible {
+    background: #f5f7fa
+}
+
+.support-request-card strong {
+    overflow: hidden;
+    color: var(--blue);
+    text-overflow: ellipsis;
+    white-space: nowrap
+}
+
+.support-request-card time,
+.support-request-card > span:not(.status) {
+    color: var(--muted);
+    font-size: 12px
+}
+
+.admin-support-dialog {
+    width: min(680px, calc(100vw - 32px));
+    max-height: min(85vh, 760px);
+    padding: 24px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    color: var(--text)
+}
+
+.admin-support-dialog::backdrop {
+    background: #10233d80
+}
+
+.admin-support-dialog .section-heading {
+    align-items: flex-start
+}
+
+.admin-support-dialog h2 {
+    margin: 0;
+    color: var(--blue);
+    font-size: 18px
+}
+
+.admin-support-dialog #admin-support-dialog-message,
+.admin-support-dialog #admin-support-dialog-previous-reply {
+    margin: 16px 0;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere
 }
 
 .admin-record h3 {
@@ -1111,6 +1195,55 @@ tbody tr:last-child td {
     margin: 0
 }
 
+.notifications-toolbar {
+    display: flex;
+    align-items: end;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin: 16px 0
+}
+
+.notifications-toolbar label {
+    display: grid;
+    gap: 5px;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 600
+}
+
+.notifications-toolbar input,
+.notifications-toolbar select {
+    min-width: 180px;
+    padding: 9px 10px;
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    background: #fff;
+    color: var(--text)
+}
+
+.notification-limits {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px
+}
+
+.notification-limits [aria-pressed="true"] {
+    border-color: var(--blue);
+    background: var(--blue);
+    color: #fff
+}
+
+.notification-read-button {
+    display: block;
+    margin-top: 6px;
+    padding-left: 0
+}
+
+.notification-read-button:disabled {
+    color: var(--muted);
+    cursor: default
+}
+
 .account-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -1171,6 +1304,21 @@ tbody tr:last-child td {
 @media(max-width:800px) {
     .help-layout {
         grid-template-columns: 1fr
+    }
+
+    .support-request-card {
+        grid-template-columns: minmax(0, 1fr) auto
+    }
+
+    .support-request-card > span:not(.status),
+    .support-request-card time {
+        grid-column: 1
+    }
+
+    .support-request-card .status {
+        grid-column: 2;
+        grid-row: 1 / span 2;
+        justify-self: end
     }
 
     .sidebar {
@@ -1414,6 +1562,21 @@ tbody tr:last-child td {
 }
 
 @media (max-width: 600px) {
+    .admin-section .section-heading {
+        align-items: flex-start;
+        flex-direction: column
+    }
+
+    .admin-list-controls {
+        width: 100%;
+        justify-content: space-between;
+        flex-wrap: wrap
+    }
+
+    .admin-support-dialog {
+        padding: 18px
+    }
+
     .notifications-shortcut>span:first-child {
         display: none
     }

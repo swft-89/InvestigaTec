@@ -38,10 +38,23 @@ async function runAction(payload) {
 }
 
 const output = document.querySelector('#admin-message');
+let dashboardData;
+
+function limitedItems(items, key, label) {
+  const limit = document.querySelector(`[data-admin-limit="${key}"]`).value;
+  const visible = limit === 'all' ? items : items.slice(0, Number(limit));
+  const count = document.querySelector({
+    users: '#admin-user-count',
+    projects: '#admin-project-count',
+    reports: '#admin-report-count',
+    requests: '#admin-request-count',
+  }[key]);
+  count.textContent = `${items.length} ${label} · mostrando ${visible.length}`;
+  return visible;
+}
 
 function renderUsers(users) {
-  document.querySelector('#admin-user-count').textContent = `${users.length} cuentas`;
-  document.querySelector('#admin-users-list').innerHTML = users.map(user => {
+  document.querySelector('#admin-users-list').innerHTML = limitedItems(users, 'users', 'cuentas').map(user => {
     const status = user.estado_cuenta === 'BLOQUEADA'
       ? 'Suspendida'
       : user.ext_aprobada ? 'Activa' : 'Pendiente de aprobación';
@@ -62,8 +75,7 @@ function renderUsers(users) {
 }
 
 function renderProjects(projects) {
-  document.querySelector('#admin-project-count').textContent = `${projects.length} artículos`;
-  document.querySelector('#admin-projects-list').innerHTML = projects.map(project => {
+  document.querySelector('#admin-projects-list').innerHTML = limitedItems(projects, 'projects', 'artículos').map(project => {
     const options = projectStatuses.map(([value, label]) =>
       `<option value="${value}" ${value === project.estado ? 'selected' : ''}>${label}</option>`
     ).join('');
@@ -81,8 +93,7 @@ function renderProjects(projects) {
 }
 
 function renderReports(reports) {
-  document.querySelector('#admin-report-count').textContent = `${reports.length} reportes`;
-  document.querySelector('#admin-reports-list').innerHTML = reports.map(report => `
+  document.querySelector('#admin-reports-list').innerHTML = limitedItems(reports, 'reports', 'reportes').map(report => `
     <article class="admin-record">
       <div class="section-heading"><h3>${escapeHtml(report.proyecto_titulo)}</h3>
         <span class="status ${report.estado === 'RESUELTO' ? 'approved' : 'review'}">${escapeHtml(statusLabels[report.estado] || report.estado)}</span>
@@ -98,24 +109,14 @@ function renderReports(reports) {
 }
 
 function renderSupport(requests) {
-  document.querySelector('#admin-request-count').textContent = `${requests.length} solicitudes`;
-  document.querySelector('#admin-support-list').innerHTML = requests.map(request => `
-    <article class="admin-record">
-      <div class="section-heading"><h3>${escapeHtml(request.asunto)}</h3>
-        <span class="status ${request.estado === 'RESPONDIDA' ? 'approved' : 'review'}">${escapeHtml(statusLabels[request.estado] || request.estado)}</span>
-      </div>
-      <p class="muted">${escapeHtml(request.tipo)} · ${escapeHtml(request.nombre_contacto)} ·
-        <a href="mailto:${encodeURIComponent(request.correo_contacto)}">${escapeHtml(request.correo_contacto)}</a> ·
-        ${escapeHtml(formatDate(request.fecha_creacion))} · ${request.id_usuario ? 'Cuenta registrada' : 'Invitado'}</p>
-      <p class="admin-message-body">${escapeHtml(request.mensaje)}</p>
-      ${request.respuesta ? `<div class="admin-reply"><strong>Respuesta guardada:</strong><p>${escapeHtml(request.respuesta)}</p></div>` : ''}
-      <form class="admin-reply-form" data-form="support-reply" data-id="${request.id_solicitud}">
-        <label>Respuesta al usuario
-          <textarea name="reply" rows="3" maxlength="5000" required placeholder="Escribe la respuesta para el usuario...">${escapeHtml(request.respuesta || '')}</textarea>
-        </label>
-        <button class="button primary" type="submit">${request.respuesta ? 'Actualizar respuesta' : 'Enviar respuesta'}</button>
-      </form>
-    </article>`).join('') || '<p class="muted">No se han recibido solicitudes de soporte.</p>';
+  const visible = limitedItems(requests, 'requests', 'solicitudes');
+  document.querySelector('#admin-support-list').innerHTML = visible.map(request => `
+    <button class="support-request-card" type="button" data-support-request="${request.id_solicitud}">
+      <strong>${escapeHtml(request.asunto)}</strong>
+      <span>${escapeHtml(request.nombre_contacto)}</span>
+      <time datetime="${escapeHtml(request.fecha_creacion)}">${escapeHtml(formatDate(request.fecha_creacion))}</time>
+      <span class="status ${request.estado === 'RESPONDIDA' ? 'approved' : 'review'}">${escapeHtml(statusLabels[request.estado] || request.estado)}</span>
+    </button>`).join('') || '<p class="muted">No se han recibido solicitudes de soporte.</p>';
 }
 
 async function loadDashboard() {
@@ -126,6 +127,7 @@ async function loadDashboard() {
     renderProjects(data.projects);
     renderReports(data.reports);
     renderSupport(data.requests);
+    dashboardData = data;
     output.textContent = '';
   } catch (error) {
     output.textContent = error.message || 'No se pudo cargar el panel administrativo.';
@@ -133,6 +135,16 @@ async function loadDashboard() {
 }
 
 export function initAdmin() {
+  for (const select of document.querySelectorAll('[data-admin-limit]')) {
+    select.addEventListener('change', () => {
+      if (!dashboardData) return;
+      renderUsers(dashboardData.users);
+      renderProjects(dashboardData.projects);
+      renderReports(dashboardData.reports);
+      renderSupport(dashboardData.requests);
+    });
+  }
+
   document.querySelectorAll('[data-admin-tab]').forEach(tab => {
     tab.addEventListener('click', () => {
       document.querySelectorAll('[data-admin-tab]').forEach(item => {
@@ -191,9 +203,31 @@ export function initAdmin() {
     }
   });
 
-  document.querySelector('#admin-support-list').addEventListener('submit', async event => {
-    const form = event.target.closest('[data-form="support-reply"]');
-    if (!form) return;
+  const supportDialog = document.querySelector('#admin-support-dialog');
+  const supportReply = document.querySelector('#admin-support-reply');
+  document.querySelector('#admin-support-list').addEventListener('click', event => {
+    const button = event.target.closest('[data-support-request]');
+    if (!button || !dashboardData) return;
+    const request = dashboardData.requests.find(item =>
+      Number(item.id_solicitud) === Number(button.dataset.supportRequest)
+    );
+    if (!request) return;
+    document.querySelector('#admin-support-dialog-title').textContent = request.asunto;
+    document.querySelector('#admin-support-dialog-meta').textContent =
+      `${request.tipo} · ${request.nombre_contacto} · ${request.correo_contacto} · ${formatDate(request.fecha_creacion)} · ${statusLabels[request.estado] || request.estado} · ${request.id_usuario ? 'Cuenta registrada' : 'Invitado'}`;
+    document.querySelector('#admin-support-dialog-message').textContent = request.mensaje;
+    const previousReply = document.querySelector('#admin-support-dialog-previous-reply');
+    previousReply.hidden = !request.respuesta;
+    previousReply.textContent = request.respuesta ? `Respuesta guardada: ${request.respuesta}` : '';
+    supportReply.dataset.id = request.id_solicitud;
+    supportReply.elements.reply.value = request.respuesta || '';
+    supportReply.querySelector('button[type="submit"]').textContent =
+      request.respuesta ? 'Actualizar respuesta' : 'Enviar respuesta';
+    supportDialog.showModal();
+  });
+  document.querySelector('#admin-support-dialog-close').addEventListener('click', () => supportDialog.close());
+  supportReply.addEventListener('submit', async event => {
+    const form = event.currentTarget;
     event.preventDefault();
     const button = form.querySelector('button');
     button.disabled = true;
@@ -203,6 +237,7 @@ export function initAdmin() {
         request_id: Number(form.dataset.id),
         reply: form.elements.reply.value,
       });
+      supportDialog.close();
       output.textContent = result.message;
     } catch (error) {
       output.textContent = error.message;

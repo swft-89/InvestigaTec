@@ -3,6 +3,9 @@ declare(strict_types=1);
 
 function brevo_send_email(string $email, string $name, string $subject, string $html, string $text): void
 {
+    $html .= '<p>Por favor, no respondas a este correo; esta dirección no recibe respuestas.</p>';
+    $text .= "\n\nPor favor, no respondas a este correo; esta dirección no recibe respuestas.";
+
     $apiKey = getenv('BREVO_API_KEY');
     $senderEmail = getenv('BREVO_SENDER_EMAIL');
     $senderName = getenv('BREVO_SENDER_NAME') ?: 'InvestigaTec';
@@ -67,14 +70,14 @@ function application_public_url(string $path): string
     return rtrim($baseUrl, '/') . '/' . ltrim($path, '/');
 }
 
-function dispatch_notification_email(PDO $pdo, int $notificationId): bool
+function dispatch_notification_email(PDO $pdo, int $notificationId): ?bool
 {
     $claim = $pdo->prepare(
         "UPDATE ext_notificacion SET estado_envio = 'ENVIANDO'
          WHERE id_notificacion = :id AND estado_envio = 'PENDIENTE'"
     );
     $claim->execute(['id' => $notificationId]);
-    if ($claim->rowCount() !== 1) return false;
+    if ($claim->rowCount() !== 1) return null;
 
     try {
         $query = $pdo->prepare(
@@ -125,7 +128,7 @@ function dispatch_notification_email(PDO $pdo, int $notificationId): bool
     }
 }
 
-function dispatch_pending_notification_emails(PDO $pdo, ?int $projectId = null): void
+function dispatch_pending_notification_emails(PDO $pdo, ?int $projectId = null): int
 {
     $sql = "SELECT id_notificacion FROM ext_notificacion WHERE estado_envio = 'PENDIENTE'";
     $parameters = [];
@@ -136,7 +139,9 @@ function dispatch_pending_notification_emails(PDO $pdo, ?int $projectId = null):
     $sql .= ' ORDER BY id_notificacion';
     $query = $pdo->prepare($sql);
     $query->execute($parameters);
+    $failures = 0;
     foreach ($query->fetchAll(PDO::FETCH_COLUMN) as $notificationId) {
-        dispatch_notification_email($pdo, (int)$notificationId);
+        if (dispatch_notification_email($pdo, (int)$notificationId) === false) $failures++;
     }
+    return $failures;
 }

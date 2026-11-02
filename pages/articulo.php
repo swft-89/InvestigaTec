@@ -6,7 +6,12 @@
 <p id="article-message" role="status" aria-live="polite">Cargando artículo...</p>
 <section id="article-content" hidden>
   <div class="section-heading article-detail-heading">
-    <a class="button secondary" href="?page=mis-articulos">Volver a mis artículos</a>
+    <?php $articleUser = current_user(); ?>
+    <?php if (($articleUser['type'] ?? '') === 'ESTUDIANTE'): ?>
+      <a class="button secondary" href="?page=mis-articulos">Volver a mis artículos</a>
+    <?php elseif (!empty($articleUser['is_admin'])): ?>
+      <a class="button secondary" href="?page=revision">Volver a revisar artículos</a>
+    <?php endif; ?>
     <button class="button primary" id="edit-article" type="button" hidden>Editar artículo</button>
   </div>
   <section class="panel article-details" aria-labelledby="article-title">

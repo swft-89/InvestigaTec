@@ -1,3 +1,8 @@
+FROM node:22-alpine AS pdfjs-dependencies
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev
+
 FROM php:8.3-apache
 
 ENV PORT=10000
@@ -11,6 +16,8 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 COPY composer.json composer.lock /var/www/html/
 RUN composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader \
     --working-dir=/var/www/html
+
+COPY --from=pdfjs-dependencies /app/node_modules/pdfjs-dist /var/www/html/node_modules/pdfjs-dist
 
 RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini" \
     && printf "upload_max_filesize=21M\npost_max_size=22M\nmax_execution_time=60\n" \

@@ -81,8 +81,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $project['palabras_clave'] = $keywordsQuery->fetchAll(PDO::FETCH_COLUMN);
         $project['autores'] = $authorsQuery->fetchAll(PDO::FETCH_COLUMN);
         $project['asesor'] = $advisorQuery->fetchColumn() ?: null;
+        $isAdmin = !empty($user['is_admin']);
+        $isAdvisor = false;
+        if ($user['type'] === 'DOCENTE') {
+            $advisorAccessQuery = $pdo->prepare(
+                "SELECT 1 FROM proyectos_autores
+                 WHERE id_proyecto = :proyecto AND id_usuario = :usuario
+                   AND tipo_participacion = 'ASESOR'"
+            );
+            $advisorAccessQuery->execute(['proyecto' => $projectId, 'usuario' => $user['id']]);
+            $isAdvisor = (bool)$advisorAccessQuery->fetchColumn();
+        }
         $project['has_open_report'] = false;
-        if ($user['type'] === 'DOCENTE' || !empty($user['is_admin'])) {
+        if ($isAdvisor || $isAdmin) {
             $reportAccessQuery = $pdo->prepare(
                 "SELECT COUNT(*) FROM ext_reporte_proyecto
                  WHERE id_proyecto = :proyecto AND id_reportado_por = :usuario AND estado <> 'RESUELTO'"
@@ -90,7 +101,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             $reportAccessQuery->execute(['proyecto' => $projectId, 'usuario' => $user['id']]);
             $project['has_open_report'] = (int)$reportAccessQuery->fetchColumn() > 0;
         }
-        $project['can_report'] = (!empty($user['is_admin']) || $project['estado'] !== 'PUBLICADO')
+        $project['can_report'] = ($isAdmin || ($isAdvisor && $project['estado'] !== 'PUBLICADO'))
             && !$project['has_open_report'];
         $project['can_edit'] = (int)$project['creado_por'] === (int)$user['id'];
         if (!$project['can_edit']) {

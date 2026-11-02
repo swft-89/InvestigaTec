@@ -43,6 +43,18 @@ try {
         $pdo->rollBack();
         json_response(404, ['error' => 'No se encontró el artículo.']);
     }
+    if (empty($user['is_admin'])) {
+        $advisorQuery = $pdo->prepare(
+            "SELECT 1 FROM proyectos_autores
+             WHERE id_proyecto = :proyecto AND id_usuario = :usuario
+               AND tipo_participacion = 'ASESOR'"
+        );
+        $advisorQuery->execute(['proyecto' => $projectId, 'usuario' => $user['id']]);
+        if (!$advisorQuery->fetchColumn()) {
+            $pdo->rollBack();
+            json_response(403, ['error' => 'Solo el docente asesor de este artículo puede reportarlo al administrador.']);
+        }
+    }
     if ($project['estado'] === 'PUBLICADO' && empty($user['is_admin'])) {
         $pdo->rollBack();
         json_response(409, ['error' => 'Solo se pueden reportar artículos antes de su publicación.']);

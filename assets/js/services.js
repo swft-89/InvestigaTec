@@ -46,9 +46,12 @@ export const service={
  saveUser:user=>set('investigatec_profile_demo',user), // Solo preferencias de perfil en demo; NO actualiza usuarios en PostgreSQL.
  getArticles:()=>get('investigatec_articles',initialArticles),
  saveArticles:articles=>set('investigatec_articles',articles),
- getNotices:()=>apiRequest('api/notifications.php'),
+ getNotices:({limit='5',search='',status='all'}={})=>{
+  const params=new URLSearchParams({limit,search,status});
+  return apiRequest(`api/notifications.php?${params}`);
+ },
  getUnreadNoticeCount:()=>apiRequest('api/notifications.php?unread_count=1'),
- markNoticesRead:()=>apiRequest('api/notifications.php',{action:'mark_read'}),
+ markNoticeRead:id=>apiRequest('api/notifications.php',{action:'mark_read',notification_id:id}),
  sendSupportRequest:data=>apiRequest('api/support.php',data),
  getAdminDashboard:()=>apiRequest('api/admin.php'),
  adminAction:data=>apiRequest('api/admin.php',data),

@@ -35,11 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                      WHERE r.id_proyecto = p.id_proyecto AND r.estado <> 'RESUELTO') AS reportes_abiertos
              FROM proyectos p
              JOIN usuarios u ON u.id_usuario = p.creado_por
-             ORDER BY CASE WHEN EXISTS (
-                         SELECT 1 FROM ext_reporte_proyecto r
-                         WHERE r.id_proyecto = p.id_proyecto AND r.estado <> 'RESUELTO'
-                     ) THEN 0 ELSE 1 END,
-                     p.fecha_creacion DESC"
+             ORDER BY p.fecha_creacion DESC, p.id_proyecto DESC"
         )->fetchAll();
         foreach ($projects as &$project) $project['reportes_abiertos'] = (int)$project['reportes_abiertos'];
         unset($project);
@@ -52,8 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
              FROM ext_reporte_proyecto r
              JOIN proyectos p ON p.id_proyecto = r.id_proyecto
              JOIN usuarios u ON u.id_usuario = r.id_reportado_por
-             ORDER BY CASE r.estado WHEN 'PENDIENTE' THEN 0 WHEN 'EN_REVISION' THEN 1 ELSE 2 END,
-                      r.fecha_creacion DESC"
+             ORDER BY r.fecha_creacion DESC, r.id_reporte DESC"
         )->fetchAll();
 
         $requests = $pdo->query(
@@ -63,8 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                     trim(concat_ws(' ', r.nombre, r.apellido_paterno, r.apellido_materno)) AS respondido_por
              FROM ext_ayuda_sugerencias s
              LEFT JOIN usuarios r ON r.id_usuario = s.respuesta_por
-             ORDER BY CASE s.estado WHEN 'PENDIENTE' THEN 0 WHEN 'EN_REVISION' THEN 1 ELSE 2 END,
-                      s.fecha_creacion DESC"
+             ORDER BY s.fecha_creacion DESC, s.id_solicitud DESC"
         )->fetchAll();
 
         json_response(200, ['users' => $users, 'projects' => $projects, 'reports' => $reports, 'requests' => $requests]);
@@ -156,8 +150,14 @@ try {
             ]);
         }
         $pdo->commit();
-        if ($previous !== $status) dispatch_pending_notification_emails($pdo, $projectId);
-        json_response(200, ['message' => 'Estado del artículo actualizado.']);
+        $emailFailures = $previous !== $status
+            ? dispatch_pending_notification_emails($pdo, $projectId)
+            : 0;
+        json_response(200, [
+            'message' => $emailFailures > 0
+                ? 'Estado actualizado, pero no se pudieron enviar uno o más correos. Revisa la configuración y los logs de Brevo.'
+                : 'Estado del artículo actualizado.',
+        ]);
     }
 
     if ($action === 'set_report_status') {
@@ -213,8 +213,9 @@ try {
         }
         $pdo->commit();
         if ($request['id_usuario'] !== null) {
-            dispatch_notification_email($pdo, $notificationId);
+            $mailSent = dispatch_notification_email($pdo, $notificationId);
         } else {
+            $mailSent = true;
             try {
                 $escapedReply = htmlspecialchars($reply, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
                 brevo_send_email(
@@ -236,7 +237,9 @@ try {
         json_response(200, [
             'message' => $request['id_usuario'] === null
                 ? 'Respuesta guardada y enviada por correo.'
-                : 'Respuesta enviada y notificación creada.',
+                : ($mailSent === false
+                    ? 'La respuesta quedó guardada y aparece en tus notificaciones, pero no se pudo enviar el correo. Revisa la configuración de Brevo.'
+                    : 'Respuesta enviada y notificación creada.'),
         ]);
     }
 
