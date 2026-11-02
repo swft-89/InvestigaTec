@@ -47,7 +47,7 @@ Al seleccionar un PDF en el formulario de subida, PDF.js extrae su texto localme
 
 ## Despliegue en Render con Docker
 
-El contenedor usa PHP 8.3 con Apache y `pdo_pgsql`. Render debe recibir los archivos subidos en un disco persistente; sin él, las fotos y los PDF se pierden al reiniciar o volver a desplegar.
+El contenedor usa PHP 8.3 con Apache y `pdo_pgsql`. En el plan gratuito el sistema de archivos de Render es efímero: las fotos y los PDF nuevos guardados localmente pueden perderse al reiniciar o volver a desplegar. Para conservar nuevas cargas sin un disco de pago, integra almacenamiento de objetos externo y guarda sus URL o identificadores; no uses Git como almacenamiento de cargas de usuarios.
 
 1. Confirma que tienes la rama actualizada y súbela a GitHub:
 
@@ -67,7 +67,7 @@ El contenedor usa PHP 8.3 con Apache y `pdo_pgsql`. Render debe recibir los arch
    - `database/migrations/20261025_admin_moderation.sql`
 
    `database/seed_desarrollo.sql` contiene datos de ejemplo local: no lo uses como catálogo de producción. Carga los departamentos y carreras oficiales antes de habilitar registros. Provisiona también la cuenta administradora con el procedimiento descrito arriba.
-5. En la configuración del Web Service agrega un **Persistent Disk** con punto de montaje `/var/www/html/uploads`. El plan de Render debe permitir discos persistentes. Ese directorio guarda las imágenes de perfil y los PDF; no se incluye el contenido local de `uploads/` en la imagen Docker. Los discos persistentes están asociados a una instancia, así que mantén una sola instancia del servicio mientras almacenes las cargas allí.
+5. Para conservar cargas nuevas, configura un servicio de almacenamiento externo compatible con tu presupuesto y adapta la aplicación para subir y recuperar desde ese servicio. Un Persistent Disk montado en `/var/www/html/uploads` también funciona, pero requiere un plan de Render que lo permita. Los archivos que ya están versionados bajo `uploads/proyectos/` se incluyen en la imagen; las fotos de perfil están excluidas de Git y deben recuperarse desde una copia de respaldo. No agregues fotos privadas ni cargas de usuarios al repositorio.
 6. Despliega y revisa los logs del servicio. Cada push posterior a `b` iniciará un nuevo despliegue. Mantén `DATABASE_URL` como variable privada y haz respaldo de la base y del disco según la política de datos de tu proyecto.
 
 Para comprobar la imagen localmente, si tienes Docker instalado:

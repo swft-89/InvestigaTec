@@ -6,4 +6,5 @@ vendor
 .env
 .env.*
 config/database.local.php
-uploads
+uploads/perfiles/*
+!uploads/perfiles/.gitkeep
