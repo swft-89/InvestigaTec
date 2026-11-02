@@ -3,7 +3,7 @@ FROM php:8.3-apache
 ENV PORT=10000
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends libpq-dev libonig-dev libcurl4-openssl-dev \
+    && apt-get install -y --no-install-recommends libpq-dev libonig-dev libcurl4-openssl-dev unzip \
     && docker-php-ext-install curl mbstring pdo_pgsql \
     && rm -rf /var/lib/apt/lists/*
 
