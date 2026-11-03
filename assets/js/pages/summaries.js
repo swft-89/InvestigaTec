@@ -1,2 +1,2 @@
-import {service} from '../services.js';import {escapeHtml,own} from '../main.js';
+import {service} from '../services.js';import {escapeHtml,own} from '../shared.js';
 export function initSummaries(){const items=service.getArticles().filter(a=>own(a));document.querySelector('#summaries-list').innerHTML=items.length?items.map(a=>`<div class="note-row"><h3>${escapeHtml(a.title)}</h3><p>${escapeHtml(a.summary||'Resumen automático pendiente de generación por el servicio de PLN.')}</p></div>`).join(''):'<p>Aún no tienes investigaciones registradas.</p>';}
