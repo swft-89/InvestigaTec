@@ -17,7 +17,7 @@
 <aside class="sidebar" id="sidebar" aria-label="Navegación principal">
   <button class="sidebar-close" id="sidebar-close" type="button" aria-label="Cerrar menú">×</button>
   <a class="brand" href="<?= $esAdministrador ? '?page=admin' : 'index.php' ?>">
-    <img src="assets/img/logo-investigatec.png" alt="InvestigaTec">
+    <img src="assets/img/logo-investigatec.jpg" alt="InvestigaTec">
     <span class="brand-caption">Repositorio académico</span>
   </a>
 
