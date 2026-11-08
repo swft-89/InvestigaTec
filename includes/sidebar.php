@@ -4,6 +4,7 @@
     'explorar' => 'Explorar',
     'mis-articulos' => 'Mis artículos',
     'subir' => 'Subir',
+    'usuarios' => 'Buscar usuarios',
     'perfil' => 'Perfil',
     'notificaciones' => 'Notificaciones',
     'ayuda' => 'Ayuda y soporte',
@@ -23,7 +24,7 @@
   <?php if ($esAdministrador): ?>
     <p class="nav-caption" id="admin-nav-label">Administración</p>
     <nav class="menu-list" aria-labelledby="admin-nav-label">
-      <?php foreach (['admin' => 'Panel administrativo', 'revision' => 'Revisar artículos'] as $p => $label): ?>
+      <?php foreach (['admin' => 'Panel administrativo', 'revision' => 'Revisar artículos', 'usuarios' => 'Buscar usuarios'] as $p => $label): ?>
         <a href="?page=<?= e($p) ?>"
           class="<?= isset($page) && $page === $p ? 'active' : '' ?>"
           <?= isset($page) && $page === $p ? 'aria-current="page"' : '' ?>
@@ -33,7 +34,7 @@
   <?php else: ?>
     <p class="nav-caption" id="repository-nav-label">Repositorio</p>
     <nav class="menu-list" aria-labelledby="repository-nav-label">
-      <?php foreach (['inicio', 'explorar', 'mis-articulos', 'subir'] as $p): ?>
+      <?php foreach (['inicio', 'explorar', 'mis-articulos', 'subir', 'usuarios'] as $p): ?>
         <a
           href="?page=<?= e($p) ?>"
           class="<?= isset($page) && $page === $p ? 'active' : '' ?>"

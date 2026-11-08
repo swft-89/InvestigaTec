@@ -5,23 +5,28 @@
 <div class="panel">
   <div class="section-heading"><h2>Avisos</h2></div>
   <div class="notifications-toolbar">
-    <label>
+    <label class="notification-search-field">
       Buscar notificaciones
       <input id="notification-search" type="search" maxlength="200" placeholder="Buscar por mensaje o artículo">
     </label>
-    <label>
-      Filtrar
-      <select id="notification-filter">
-        <option value="all">Todas</option>
-        <option value="unread">Sin leer</option>
-        <option value="read">Leídas</option>
-      </select>
-    </label>
-    <div class="notification-limits" role="group" aria-label="Cantidad de notificaciones">
-      <button class="button secondary" type="button" data-notification-limit="5" aria-pressed="true">5</button>
-      <button class="button secondary" type="button" data-notification-limit="10" aria-pressed="false">10</button>
-      <button class="button secondary" type="button" data-notification-limit="15" aria-pressed="false">15</button>
-      <button class="button secondary" type="button" data-notification-limit="all" aria-pressed="false">Ver todas</button>
+    <div class="notification-secondary-tools">
+      <label>
+        Estado
+        <select id="notification-filter">
+          <option value="all">Todas</option>
+          <option value="unread">Sin leer</option>
+          <option value="read">Leídas</option>
+        </select>
+      </label>
+      <div class="notification-limit-control">
+        <span>Mostrar</span>
+        <div class="notification-limits" role="group" aria-label="Cantidad de notificaciones">
+          <button type="button" data-notification-limit="5" aria-pressed="true">5</button>
+          <button type="button" data-notification-limit="10" aria-pressed="false">10</button>
+          <button type="button" data-notification-limit="15" aria-pressed="false">15</button>
+          <button type="button" data-notification-limit="all" aria-pressed="false">Todas</button>
+        </div>
+      </div>
     </div>
   </div>
   <p id="notifications-message" role="status" aria-live="polite">Cargando notificaciones...</p>

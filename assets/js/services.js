@@ -51,6 +51,8 @@ export const service={
   return apiRequest(`api/notifications.php?${params}`);
  },
  getUnreadNoticeCount:()=>apiRequest('api/notifications.php?unread_count=1'),
+ getUsers:search=>apiRequest(`api/users.php?q=${encodeURIComponent(search)}`),
+ getUserDetails:id=>apiRequest(`api/users.php?id=${encodeURIComponent(id)}`),
  markNoticeRead:id=>apiRequest('api/notifications.php',{action:'mark_read',notification_id:id}),
  sendSupportRequest:data=>apiRequest('api/support.php',data),
  getAdminDashboard:()=>apiRequest('api/admin.php'),

@@ -67,3 +67,4 @@
     <button class="button primary" type="submit">Enviar respuesta</button>
   </form>
 </dialog>
+<?php require __DIR__ . '/../includes/user-profile-dialog.php'; ?>

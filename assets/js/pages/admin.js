@@ -1,5 +1,6 @@
 import {service} from '../services.js';
 import {escapeHtml} from '../shared.js';
+import {initUserProfileDialog, openUserProfile} from './user-profile-dialog.js';
 
 const projectStatuses = [
   ['BORRADOR', 'Borrador'],
@@ -64,7 +65,7 @@ function renderUsers(users) {
       : `<button class="button primary admin-action" type="button" data-action="approve-user" data-id="${user.id_usuario}">${user.ext_aprobada ? 'Reactivar' : 'Aprobar'}</button>`;
     const fullName = [user.nombre, user.apellido_paterno, user.apellido_materno].filter(Boolean).join(' ');
     return `<tr>
-      <td>${escapeHtml(fullName)}</td>
+      <td><button class="admin-user-profile" type="button" data-user-profile-id="${Number(user.id_usuario)}">${escapeHtml(fullName)}</button></td>
       <td>${escapeHtml(user.correo)}</td>
       <td>${escapeHtml(user.ext_administrador ? 'ADMINISTRADOR' : user.tipo_usuario)}</td>
       <td>${escapeHtml(user.afiliacion || '—')}</td>
@@ -135,6 +136,8 @@ async function loadDashboard() {
 }
 
 export function initAdmin() {
+  const userProfileDialog = document.querySelector('#user-profile-dialog');
+  initUserProfileDialog(userProfileDialog);
   for (const select of document.querySelectorAll('[data-admin-limit]')) {
     select.addEventListener('change', () => {
       if (!dashboardData) return;
@@ -157,6 +160,11 @@ export function initAdmin() {
   });
 
   document.querySelector('#admin-users-list').addEventListener('click', async event => {
+    const profileButton = event.target.closest('[data-user-profile-id]');
+    if (profileButton) {
+      await openUserProfile(profileButton.dataset.userProfileId, userProfileDialog);
+      return;
+    }
     const button = event.target.closest('[data-action]');
     if (!button) return;
     button.disabled = true;

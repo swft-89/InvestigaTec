@@ -248,6 +248,20 @@ Variables de entorno relevantes:
 - Las credenciales y secretos deben permanecer en configuracion privada del
   entorno, nunca en el repositorio ni en JavaScript del navegador.
 
+4.9 Busqueda de usuarios
+- Usuarios con sesion pueden buscar cuentas activas por nombre, afiliacion o
+  tipo y consultar su perfil academico y articulos publicados.
+- Los correos, identificadores escolares y articulos no publicados solo se
+  incluyen en el detalle solicitado por el administrador.
+- En el panel administrativo, el nombre de cada cuenta abre el mismo dialogo
+  con el perfil completo y sus articulos en cualquier estado.
+- El servidor vuelve a validar la sesion y el permiso administrativo y limita
+  los resultados de busqueda a 50 usuarios.
+
+Archivos principales:
+  api/users.php, pages/usuarios.php, includes/user-profile-dialog.php,
+  assets/js/pages/user-directory.js, user-profile-dialog.js, admin.js.
+
 ======================================================================
 5. API PRINCIPAL
 ======================================================================
@@ -256,6 +270,7 @@ api/register.php             Registro.
 api/login.php                Inicio de sesion.
 api/logout.php               Cierre de sesion.
 api/profile.php              Consulta y actualizacion del perfil.
+api/users.php                Busqueda y consulta de perfiles de usuario.
 api/carreras.php             Catalogo de carreras.
 api/projects.php             Catalogos y alta de proyectos.
 api/my-projects.php          Lista de articulos propios/participados.
