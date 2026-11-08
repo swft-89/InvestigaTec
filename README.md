@@ -44,7 +44,7 @@ Para generar el valor de `password_hash`, ejecuta localmente `php -r '$p = readl
 
 Las cuentas nuevas quedan pendientes hasta su aprobación. La suspensión invalida la sesión activa y bloquea nuevos inicios de sesión. Los docentes tienen una sección de revisión donde pueden consultar artículos no publicados y enviar reportes; el administrador recibe esos reportes en su panel y en sus notificaciones. Las respuestas a usuarios registrados aparecen en sus notificaciones y las respuestas a solicitudes de invitados se envían por correo.
 
-Al seleccionar un PDF en el formulario de subida, PDF.js extrae su texto localmente en el navegador. El sistema busca una sección “Resumen” o “Abstract”; si no la encuentra, propone un resumen extractivo basado en las oraciones y términos más relevantes. El campo queda editable antes de enviar. Para instalar la dependencia del navegador en desarrollo ejecuta `npm ci` en la raíz del proyecto; Docker instala y publica PDF.js durante la construcción. Los archivos del PDF no se envían para generar el resumen.
+Al seleccionar un PDF en el formulario de subida, PDF.js extrae su texto localmente en el navegador y busca una sección “Resumen” o “Abstract”. Si la encuentra, copia ese texto al campo editable; si no, indica al usuario que ingrese el resumen manualmente. El sistema no genera resúmenes automáticamente ni envía los archivos PDF a un servicio externo. Para instalar la dependencia del navegador en desarrollo ejecuta `npm ci` en la raíz del proyecto; Docker instala y publica PDF.js durante la construcción.
 
 ## Despliegue en Render con Docker
 

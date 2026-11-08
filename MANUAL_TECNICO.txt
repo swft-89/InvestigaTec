@@ -1,0 +1,351 @@
+INVESTIGATEC
+MANUAL TECNICO: TECNOLOGIAS, MODULOS, ESTRUCTURA Y FUNCIONALIDADES
+
+Version del manual: 2 de noviembre de 2026
+
+======================================================================
+1. DESCRIPCION GENERAL
+======================================================================
+
+InvestigaTec es un repositorio web para registrar, revisar y consultar
+proyectos/articulos de investigacion. El sistema incluye interfaces para
+estudiantes, docentes y administracion, persistencia en PostgreSQL,
+almacenamiento de documentos y envio de correos mediante Brevo.
+
+La aplicacion utiliza PHP para las paginas y la API, JavaScript ES modules
+para la interactividad del navegador y CSS para la presentacion. No utiliza
+un framework PHP o frontend como Laravel, React o Vue.
+
+======================================================================
+2. TECNOLOGIAS Y DEPENDENCIAS
+======================================================================
+
+Frontend:
+- HTML generado por PHP.
+- CSS: assets/css/styles.css.
+- JavaScript ES modules sin framework de interfaz.
+- PDF.js, paquete npm pdfjs-dist 5.4.624, para extraer texto de PDF en el
+  navegador y buscar el apartado Resumen o Abstract.
+- Node.js y npm se usan para instalar PDF.js y ejecutar pruebas automatizadas.
+
+Backend:
+- PHP 8.3.
+- Apache HTTP Server.
+- API HTTP implementada en archivos PHP dentro de api/.
+- PDO y pdo_pgsql para el acceso a la base PostgreSQL.
+- Extensiones PHP requeridas por el contenedor: curl, mbstring y pdo_pgsql.
+- Sesiones PHP para autenticacion y proteccion CSRF en las operaciones POST.
+
+Base de datos:
+- PostgreSQL 16 segun el esquema documentado.
+- SQL relacional y funciones/trigger PL/pgSQL.
+- database/schema.sql define las tablas base.
+- database/migrations/ contiene cambios incrementales del esquema y triggers.
+
+Servicios externos:
+- Brevo SMTP API v3: correo de recuperacion, notificaciones y respuestas.
+- Cloudinary PHP SDK: almacenamiento remoto de imagenes de perfil y PDF cuando
+  estan configuradas sus credenciales.
+- APP_URL o RENDER_EXTERNAL_URL: URL base HTTPS para enlaces de correo.
+
+Construccion y despliegue:
+- Dockerfile multietapa; una etapa instala PDF.js con Node.js y la imagen final
+  usa PHP 8.3 con Apache.
+- Composer instala cloudinary/cloudinary_php.
+- Render se documenta como destino de despliegue y PostgreSQL administrado.
+- El almacenamiento local de Render puede ser efimero; Cloudinary se usa para
+  persistir archivos cuando esta configurado.
+
+Pruebas:
+- npm test ejecuta Node.js test runner.
+- Actualmente incluye pruebas para extraccion de texto y del apartado
+  Resumen/Abstract en assets/js/pages/pdf-summary.test.js.
+
+======================================================================
+3. ESTRUCTURA DEL REPOSITORIO
+======================================================================
+
+/
+  index.php
+    Entrada de la aplicacion: carga la pagina, encabezado, menu, CSRF y JS.
+  Dockerfile
+    Construccion de la imagen PHP/Apache y copia de PDF.js.
+  docker-entrypoint.sh
+    Inicializacion del contenedor.
+  composer.json / composer.lock
+    Dependencia PHP de Cloudinary.
+  package.json / package-lock.json
+    Dependencia PDF.js y comando npm test.
+
+  api/
+    Endpoints HTTP de autenticacion, usuarios, proyectos, avisos,
+    administracion, revision, soporte y recuperacion de contrasena.
+
+  assets/
+    css/styles.css
+      Estilos globales, componentes, estados y adaptacion movil.
+    js/main.js
+      Enrutamiento frontend e inicializacion de modulos.
+    js/services.js
+      Cliente de API, envio de CSRF y funciones reutilizables para la interfaz.
+    js/shared.js
+      Utilidades de interfaz compartidas.
+    js/pages/
+      Modulos JavaScript especificos de cada pantalla y pruebas.
+
+  config/
+    app.php
+      Configuracion general de la aplicacion.
+    database.php
+      Construye la conexion PDO desde DATABASE_URL o configuracion local.
+    database.local.example.php
+      Plantilla de configuracion de base de datos local.
+
+  database/
+    schema.sql
+      Tablas, tipos y estructura inicial de PostgreSQL.
+    seed_desarrollo.sql
+      Datos de ejemplo para desarrollo local.
+    migrations/
+      Migraciones SQL para notificaciones, soporte, moderacion, Cloudinary,
+      correo y recuperacion de contrasena.
+
+  includes/
+    auth.php
+      Sesiones, identidad de usuario, CSRF, respuestas y entrada JSON.
+    admin.php
+      Verificacion de privilegios administrativos en servidor.
+    bootstrap.php
+      Seleccion de pagina, restricciones y etiquetas.
+    brevo.php
+      Envio de correo y despacho de correos asociados a notificaciones.
+    cloudinary.php
+      Integracion con almacenamiento Cloudinary.
+    header.php / sidebar.php
+      Componentes compartidos de navegacion y cuenta.
+
+  pages/
+    Plantillas PHP de paginas de inicio, articulos, perfil, soporte,
+    notificaciones, revision, panel administrativo y autenticacion.
+
+  uploads/
+    Almacenamiento local alternativo para archivos cuando no se usa
+    Cloudinary. Requiere permisos de escritura del proceso Apache.
+
+  services/README.md
+    Notas de integracion y operacion de servicios.
+
+======================================================================
+4. MODULOS FUNCIONALES
+======================================================================
+
+4.1 Acceso y cuentas
+- Registro de cuenta.
+- Inicio y cierre de sesion.
+- Las cuentas nuevas quedan pendientes de aprobacion.
+- La suspension bloquea el acceso normal.
+- Recuperacion de contrasena por enlace de un solo uso y con vencimiento.
+- Perfil editable para los datos y opciones que correspondan al tipo de usuario.
+
+Archivos principales:
+  api/register.php, api/login.php, api/logout.php,
+  api/password-recovery.php, api/reset-password.php, api/profile.php,
+  includes/auth.php, assets/js/pages/account.js,
+  assets/js/pages/password-recovery.js, assets/js/pages/profile.js.
+
+4.2 Proyectos y documentos
+- Alta de proyectos con titulo, resumen, departamento, areas, palabras clave,
+  autores, asesor y estado inicial permitido.
+- Los autores deben ser cuentas existentes y activas.
+- Limite de 3 areas por proyecto.
+- PDF hasta 20 MB.
+- Consulta de proyectos propios o donde el usuario participa como autor.
+- Edicion de metadatos y reemplazo de PDF en estados editables.
+- Vista previa protegida y descarga con control de acceso.
+- Catalogo de articulos publicados y ficha publica.
+- Historial de estados y versiones de PDF.
+
+Archivos principales:
+  api/projects.php, api/my-projects.php, api/project.php,
+  api/project-file.php, api/project-download.php, api/public-project.php,
+  api/public-projects.php, api/carreras.php,
+  assets/js/pages/upload.js, article.js, my-articles.js,
+  catalog.js, public-article.js.
+
+4.3 Extraccion del resumen del PDF
+- PDF.js extrae texto localmente en el navegador; el PDF no se envia a un
+  servicio externo.
+- Si encuentra el encabezado Resumen o Abstract, extrae el texto de esa
+  seccion y lo coloca en el campo editable.
+- Si no encuentra ese apartado o el PDF no tiene texto extraible, informa al
+  usuario que debe ingresar el resumen manualmente.
+- El sistema no genera resumenes automaticamente.
+
+Archivos principales:
+  assets/js/pages/pdf-summary.js, upload.js,
+  assets/js/pages/pdf-summary.test.js.
+
+4.4 Revision y moderacion
+- Docentes activos consultan articulos no publicados.
+- El administrador gestiona estados, usuarios, reportes y solicitudes.
+- Los cambios de estado se guardan en historial.
+- Estados de proyecto incluyen BORRADOR, EN_REVISION, REQUIERE_CAMBIOS,
+  APROBADO, RECHAZADO y PUBLICADO.
+- El formulario de reporte de articulo se limita al administrador y al docente
+  asignado como asesor de ese articulo; el servidor tambien valida el permiso.
+
+Archivos principales:
+  api/review-projects.php, api/admin.php, api/project-report.php,
+  includes/admin.php, assets/js/pages/admin.js,
+  assets/js/pages/review-projects.js.
+
+4.5 Notificaciones
+- El trigger PostgreSQL notificar_cambio_estado_proyecto crea una notificacion
+  para cada autor cuando cambia el estado de un proyecto.
+- Las notificaciones tienen estado de lectura y despacho de correo.
+- La interfaz muestra cinco recientes de forma predeterminada y permite
+  seleccionar 5, 10, 15 o todas, buscar, filtrar por lectura y marcar cada una
+  individualmente como leida.
+- El encabezado muestra el contador de avisos sin leer.
+
+Archivos principales:
+  api/notifications.php, includes/brevo.php,
+  assets/js/pages/notifications.js, pages/notificaciones.php,
+  database/migrations/20261018_article_status_notifications.sql,
+  database/migrations/20261101_brevo_email_and_password_recovery.sql.
+
+4.6 Ayuda y soporte
+- Registro de solicitudes de ayuda, sugerencias y reportes de soporte.
+- Puede asociarse a una cuenta o recibirse como solicitud de invitado.
+- El administrador consulta los detalles y envia o actualiza una respuesta.
+- Las solicitudes se muestran compactas; un dialogo muestra el contenido y
+  formulario de respuesta.
+- Los controles de panel permiten mostrar 5, 10, 15 o todas.
+
+Archivos principales:
+  api/support.php, api/admin.php, pages/ayuda.php, pages/admin.php,
+  assets/js/pages/help.js, assets/js/pages/admin.js,
+  database/migrations/20261024_support_requests.sql.
+
+4.7 Correos
+- Brevo envia enlaces de recuperacion, avisos de cambio de estado, respuesta
+  a solicitudes y otros correos de notificacion implementados.
+- Los mensajes HTML y texto incluyen el aviso de no responder.
+- Los errores se registran en los logs de PHP; algunos flujos tambien
+  informan que el correo no pudo enviarse.
+
+Variables de entorno relevantes:
+  BREVO_API_KEY
+  BREVO_SENDER_EMAIL
+  BREVO_SENDER_NAME (opcional)
+  APP_URL (URL HTTPS publica; alternativa: RENDER_EXTERNAL_URL)
+
+4.8 Almacenamiento
+- Cloudinary cuando se configuran:
+  CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET.
+- Si no se configura Cloudinary, existen rutas locales uploads/perfiles y
+  uploads/proyectos; Apache debe poder escribir en ellas.
+- Las credenciales y secretos deben permanecer en configuracion privada del
+  entorno, nunca en el repositorio ni en JavaScript del navegador.
+
+======================================================================
+5. API PRINCIPAL
+======================================================================
+
+api/register.php             Registro.
+api/login.php                Inicio de sesion.
+api/logout.php               Cierre de sesion.
+api/profile.php              Consulta y actualizacion del perfil.
+api/carreras.php             Catalogo de carreras.
+api/projects.php             Catalogos y alta de proyectos.
+api/my-projects.php          Lista de articulos propios/participados.
+api/project.php              Consulta y edicion de articulo.
+api/project-file.php         Vista previa del PDF con permisos.
+api/project-download.php     Descarga del PDF con permisos.
+api/public-project.php       Detalle de articulo publicado.
+api/public-projects.php      Catalogo de articulos publicados.
+api/review-projects.php      Lista de revision docente/administrativa.
+api/admin.php                Panel y acciones administrativas.
+api/project-report.php       Envio de reporte sobre un articulo.
+api/notifications.php        Consulta, filtros y lectura individual.
+api/support.php              Envio de solicitud de soporte.
+api/password-recovery.php    Solicitud de recuperacion.
+api/reset-password.php       Restablecimiento con token.
+
+Las operaciones que modifican datos requieren sesion y token CSRF, salvo que
+el flujo sea deliberadamente publico como registro o solicitud de soporte.
+Los endpoints comprueban permisos en el servidor; ocultar un boton en el
+navegador no sustituye la autorizacion backend.
+
+======================================================================
+6. BASE DE DATOS Y ORDEN DE MIGRACIONES
+======================================================================
+
+Para una base nueva, consultar README.md y aplicar primero:
+
+1. database/schema.sql
+2. database/migrations/20261018_article_status_notifications.sql
+3. database/migrations/20261024_support_requests.sql
+4. database/migrations/20261025_admin_moderation.sql
+5. database/migrations/20261101_cloudinary_profile_photos.sql
+6. database/migrations/20261101_brevo_email_and_password_recovery.sql
+
+La migracion del 1 de noviembre de Brevo reinstala el trigger de estado para
+crear notificaciones con estado_envio PENDIENTE. En una base existente debe
+aplicarse despues de desplegar cambios de codigo que actualicen esa migracion.
+No volver a reemplazar el trigger con una version anterior que use NO_APLICA.
+
+Provisionar la cuenta administrativa requiere la marca administrativa,
+aprobacion y estado activo, ademas del correo de administrador configurado en
+la aplicacion. El registro publico nunca otorga privilegios administrativos.
+
+======================================================================
+7. CONFIGURACION LOCAL Y DESPLIEGUE
+======================================================================
+
+Requisitos de desarrollo:
+- PHP 8.3 con extensiones curl, mbstring y pdo_pgsql.
+- PostgreSQL.
+- Composer.
+- Node.js/npm.
+- Apache o un entorno equivalente para ejecutar PHP.
+
+Preparacion de dependencias:
+- composer install
+- npm ci
+
+Pruebas automatizadas:
+- npm test
+
+Variables de entorno utilizadas:
+  DATABASE_URL
+  BREVO_API_KEY
+  BREVO_SENDER_EMAIL
+  BREVO_SENDER_NAME
+  APP_URL o RENDER_EXTERNAL_URL
+  CLOUDINARY_CLOUD_NAME
+  CLOUDINARY_API_KEY
+  CLOUDINARY_API_SECRET
+
+La configuracion local de base puede residir en config/database.local.php,
+archivo privado que no se debe publicar. El despliegue Docker usa PHP 8.3 +
+Apache, instala Composer y copia la dependencia PDF.js al directorio servido.
+
+======================================================================
+8. LIMITACIONES Y CONSIDERACIONES OPERATIVAS
+======================================================================
+
+- La extraccion de texto no puede recuperar contenido de PDF escaneados sin
+  capa de texto; no hay OCR implementado.
+- El resumen es extractivo o copiado del apartado Resumen/Abstract, no
+  generativo.
+- No hay evaluacion docente implementada.
+- Si no se configuran Brevo o Cloudinary, las funciones que dependen de esos
+  servicios no pueden operar normalmente; revisar logs y variables de entorno.
+- El disco local de ciertos proveedores puede ser efimero. Para conservar
+  archivos en despliegues persistentes, utilizar Cloudinary u otro almacenamiento
+  de objetos.
+- El envio de correos debe probarse con cuentas de prueba autorizadas y con un
+  remitente verificado en Brevo.
+- Antes de modificar triggers o migraciones en produccion, respaldar la base y
+  aplicar los SQL en el orden documentado.

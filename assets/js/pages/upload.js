@@ -1,6 +1,6 @@
 import {service} from '../services.js';
 import {limitMultiSelect, toast} from '../shared.js';
-import {createArticleSummary, extractPdfText} from './pdf-summary.js';
+import {extractArticleSummary, extractPdfText} from './pdf-summary.js';
 
 let pdfjsLibPromise;
 
@@ -29,7 +29,7 @@ export function initUpload() {
   const areasLimitMessage = form.querySelector('#areas-limit-message');
   const pdfInput = form.elements.pdf;
   const summaryInput = form.elements.resumen;
-  let generatedSummary = '';
+  let extractedSummary = '';
   let extractionRequest = 0;
   limitMultiSelect(areas, 3, exceeded => {
     showMessage(areasLimitMessage, exceeded ? 'Solo puedes seleccionar hasta 3 áreas temáticas.' : '');
@@ -39,6 +39,11 @@ export function initUpload() {
     const pdf = pdfInput.files[0];
     const requestId = ++extractionRequest;
     showMessage(summaryStatus, '');
+    if (summaryInput.value === extractedSummary) {
+      summaryInput.value = '';
+      summaryInput.dispatchEvent(new Event('input', {bubbles: true}));
+    }
+    extractedSummary = '';
     if (!pdf) return;
     if (!pdf.name.toLowerCase().endsWith('.pdf') || (pdf.type && pdf.type !== 'application/pdf')) {
       showMessage(summaryStatus, 'Selecciona un archivo PDF válido para extraer el resumen.');
@@ -64,27 +69,27 @@ export function initUpload() {
       const text = await extractPdfText(document);
       await document.destroy();
       if (requestId !== extractionRequest) return;
-      const result = createArticleSummary(text);
+      const result = extractArticleSummary(text);
       if (!result.summary) {
-        showMessage(summaryStatus, 'No se pudo extraer texto del PDF. Si es un documento escaneado, escribe el resumen manualmente.');
+        showMessage(
+          summaryStatus,
+          text.trim()
+            ? 'No se encontró un apartado Resumen/Abstract en el PDF. Ingresa el resumen manualmente.'
+            : 'No se pudo extraer texto del PDF. Ingresa el resumen manualmente.'
+        );
         return;
       }
-      if (summaryInput.value.trim() && summaryInput.value !== generatedSummary) {
+      if (summaryInput.value.trim() && summaryInput.value !== extractedSummary) {
         showMessage(summaryStatus, 'Se encontró texto en el PDF, pero conservé el resumen que ya habías escrito. Puedes copiarlo o editarlo manualmente.');
         return;
       }
       summaryInput.value = result.summary;
-      generatedSummary = result.summary;
+      extractedSummary = result.summary;
       summaryInput.dispatchEvent(new Event('input', {bubbles: true}));
-      showMessage(
-        summaryStatus,
-        result.source === 'abstract'
-          ? 'Se extrajo el apartado Resumen/Abstract. Revísalo y edítalo si lo necesitas.'
-          : 'No se encontró un apartado Resumen/Abstract; se generó una propuesta extractiva. Revísala y edítala si lo necesitas.'
-      );
+      showMessage(summaryStatus, 'Se extrajo el apartado Resumen/Abstract del PDF. Revísalo y edítalo si lo necesitas.');
     } catch (error) {
       if (requestId !== extractionRequest) return;
-      console.error('No se pudo leer el PDF para generar el resumen.', error);
+      console.error('No se pudo leer el PDF para extraer el resumen.', error);
       showMessage(summaryStatus, 'No se pudo leer este PDF. Puedes escribir el resumen manualmente y continuar.');
     }
   });
@@ -118,7 +123,7 @@ export function initUpload() {
     try {
       const result = await service.createProject(new FormData(form));
       form.reset();
-      generatedSummary = '';
+      extractedSummary = '';
       showMessage(summaryStatus, '');
       toast(`Proyecto registrado correctamente (folio ${result.id_proyecto}).`);
       showMessage(output, `Proyecto registrado correctamente. Folio: ${result.id_proyecto}.`);

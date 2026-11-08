@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createArticleSummary, extractPdfText} from './pdf-summary.js';
+import {extractArticleSummary, extractPdfText} from './pdf-summary.js';
 
 test('extracts Spanish resumen until the next section heading', () => {
   const text = [
@@ -11,14 +11,14 @@ test('extracts Spanish resumen until the next section heading', () => {
     'Este contenido no pertenece al resumen.',
   ].join('\n');
 
-  const result = createArticleSummary(text);
+  const result = extractArticleSummary(text);
   assert.equal(result.source, 'abstract');
   assert.match(result.summary, /aprendizaje colaborativo/u);
   assert.doesNotMatch(result.summary, /Palabras clave|INTRODUCCIÓN/u);
 });
 
 test('extracts English abstract after an inline heading', () => {
-  const result = createArticleSummary([
+  const result = extractArticleSummary([
     'ABSTRACT: This research studies sustainable energy systems in urban communities and evaluates their long-term impact.',
     'Keywords: renewable energy',
   ].join('\n'));
@@ -27,7 +27,7 @@ test('extracts English abstract after an inline heading', () => {
   assert.doesNotMatch(result.summary, /Keywords/u);
 });
 
-test('creates an extractive summary when the PDF has no abstract heading', () => {
+test('does not generate a summary when the PDF has no abstract heading', () => {
   const text = [
     'La investigación analiza métodos de aprendizaje automático para clasificar documentos científicos en español.',
     'El estudio utiliza un conjunto de datos de publicaciones académicas y compara varios modelos de clasificación.',
@@ -35,14 +35,11 @@ test('creates an extractive summary when the PDF has no abstract heading', () =>
     'La propuesta facilita el acceso a información de investigación para estudiantes y docentes.',
   ].join(' ');
 
-  const result = createArticleSummary(text);
-  assert.equal(result.source, 'generated');
-  assert.ok(result.summary.length > 0);
-  assert.ok(result.summary.length < text.length);
+  assert.deepEqual(extractArticleSummary(text), {summary: '', source: 'empty'});
 });
 
 test('returns an empty result for scanned PDFs without an extractable text layer', () => {
-  assert.deepEqual(createArticleSummary(' \n\t '), {summary: '', source: 'empty'});
+  assert.deepEqual(extractArticleSummary(' \n\t '), {summary: '', source: 'empty'});
 });
 
 test('extracts text and line breaks from PDF.js page content', async () => {

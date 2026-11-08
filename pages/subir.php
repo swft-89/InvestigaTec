@@ -38,7 +38,7 @@
         maxlength="20000"
         required
         placeholder="Descripción breve del proyecto (objetivos, metodología, resultados esperados)"></textarea>
-      <span class="hint">Al seleccionar el PDF se buscará “Resumen” o “Abstract”; si no se encuentra, se propondrá un resumen del texto. Puedes revisarlo y editarlo antes de enviar.</span>
+      <span class="hint">Al seleccionar el PDF se extraerá el apartado “Resumen” o “Abstract” si existe. Si no se encuentra, ingresa el resumen manualmente.</span>
       <span id="summary-status" class="hint" role="status" aria-live="polite"></span>
     </label>
 

@@ -1,0 +1,410 @@
+INVESTIGATEC
+GUION DE PRUEBAS DE ACEPTACION PARA EL CLIENTE
+
+Version del guion: 2 de noviembre de 2026
+Objetivo: comprobar los flujos principales de estudiante, docente y administrador.
+
+======================================================================
+1. PREPARACION
+======================================================================
+
+Realizar las pruebas en un ambiente de pruebas o con cuentas y articulos
+autorizados para ello. No utilizar cuentas, articulos o correos de terceros
+sin permiso.
+
+Antes de comenzar:
+
+[ ] Confirmar que el sitio abre y que no muestra errores de servidor.
+[ ] Confirmar que el ambiente tiene conexion a PostgreSQL.
+[ ] Tener una cuenta de estudiante activa y aprobada.
+[ ] Tener una cuenta de docente activa y aprobada.
+[ ] Tener una cuenta de administrador activa, aprobada y provisionada.
+[ ] Preparar un PDF de texto seleccionable, menor de 20 MB.
+[ ] Preparar, si es posible, un PDF escaneado para comprobar el caso sin texto.
+[ ] Tener acceso a las bandejas de correo de las cuentas de prueba.
+[ ] Registrar fecha, navegador y ambiente utilizados.
+
+Datos para la ejecucion:
+
+Ambiente/URL: _________________________________________________
+Fecha y hora: __________________________________________________
+Navegador y version: ___________________________________________
+Persona que prueba: ____________________________________________
+Cuenta estudiante: _____________________________________________
+Cuenta docente: ________________________________________________
+Cuenta administrador: _________________________________________
+
+Resultado por paso:
+  P = Correcto
+  F = Fallo
+  N/A = No aplica
+
+Al encontrar un fallo, anotar el numero del paso, resultado esperado,
+resultado observado, fecha/hora y, si es posible, una captura sin datos
+personales sensibles.
+
+======================================================================
+2. CUENTA, REGISTRO E INICIO DE SESION
+======================================================================
+
+PRUEBA 2.1 - Inicio de sesion correcto
+Cuenta: estudiante de prueba.
+
+Pasos:
+1. Abrir la pagina de inicio de sesion.
+2. Capturar correo y contrasena correctos.
+3. Enviar el formulario.
+
+Esperado:
+- Se inicia la sesion y se muestra la cuenta autenticada.
+- Se abre el inicio del repositorio.
+
+Resultado: ____  Observaciones: ______________________________________
+
+PRUEBA 2.2 - Credenciales incorrectas
+
+Pasos:
+1. Cerrar la sesion, si esta abierta.
+2. Intentar iniciar sesion con una contrasena incorrecta.
+
+Esperado:
+- El acceso se rechaza con un mensaje entendible.
+- La cuenta no queda autenticada.
+
+Resultado: ____  Observaciones: ______________________________________
+
+PRUEBA 2.3 - Registro y aprobacion
+
+Pasos:
+1. Crear una cuenta nueva con datos de prueba y un correo controlado.
+2. Cerrar o abandonar el registro.
+3. Intentar iniciar sesion antes de la aprobacion.
+4. Desde el panel administrativo, aprobar la cuenta.
+5. Iniciar sesion con la cuenta aprobada.
+
+Esperado:
+- El registro informa que la cuenta queda pendiente de aprobacion.
+- Antes de aprobarla, no puede iniciar sesion.
+- El administrador puede encontrar y aprobar la cuenta.
+- Despues de aprobarla, la cuenta puede iniciar sesion.
+
+Resultado: ____  Observaciones: ______________________________________
+
+PRUEBA 2.4 - Recuperacion de contrasena
+
+Pasos:
+1. En la pantalla de recuperacion, solicitar el cambio para una cuenta de
+   prueba cuyo correo pueda consultarse.
+2. Revisar la bandeja de entrada y, si aplica, correo no deseado.
+3. Abrir el enlace recibido antes de que venza.
+4. Establecer una contrasena de prueba que cumpla los requisitos.
+5. Iniciar sesion con la nueva contrasena.
+
+Esperado:
+- El sitio confirma la solicitud sin revelar si una cuenta existe.
+- Se recibe un correo con un enlace valido.
+- El enlace permite cambiar la contrasena una sola vez.
+- El correo contiene el aviso de no responder.
+- La nueva contrasena permite iniciar sesion.
+
+Resultado: ____  Observaciones: ______________________________________
+
+======================================================================
+3. PERFIL Y ARTICULOS
+======================================================================
+
+PRUEBA 3.1 - Editar perfil
+
+Pasos:
+1. Iniciar sesion como estudiante.
+2. Abrir Perfil.
+3. Cambiar un dato editable y guardar.
+4. Recargar y volver a revisar el dato.
+5. Si esta habilitado, cargar una imagen JPG o PNG menor de 1 MB.
+
+Esperado:
+- Los cambios se guardan y persisten despues de recargar.
+- Una imagen valida se muestra en el perfil.
+- Un archivo no permitido o mayor al limite se rechaza claramente.
+
+Resultado: ____  Observaciones: ______________________________________
+
+PRUEBA 3.2 - Cargar un articulo y extraer resumen
+
+Pasos:
+1. Iniciar sesion como estudiante.
+2. Abrir Subir una investigacion.
+3. Completar titulo, resumen, departamento, area, palabras clave y autores.
+   Los autores deben ser cuentas registradas y activas.
+4. Seleccionar un PDF con texto seleccionable.
+5. Observar el campo Resumen y el mensaje de extraccion.
+6. Revisar y corregir el resumen propuesto si hace falta.
+7. Completar los campos restantes, elegir Borrador y enviar.
+
+Esperado:
+- PDF.js propone el apartado Resumen/Abstract o un resumen extractivo.
+- El resumen se puede editar antes de enviar.
+- El articulo se registra y se informa su folio.
+- El articulo aparece en Mis articulos.
+
+Resultado: ____  Observaciones: ______________________________________
+
+PRUEBA 3.3 - PDF sin texto extraible y validaciones
+
+Pasos:
+1. Seleccionar un PDF escaneado sin capa de texto.
+2. Confirmar que el usuario puede escribir el resumen manualmente.
+3. Intentar seleccionar un archivo que no sea PDF o un PDF mayor de 20 MB
+   (no es necesario enviar el archivo).
+
+Esperado:
+- El sitio avisa que no pudo extraer texto y permite escribir el resumen.
+- Los archivos no validos o que excedan el limite son rechazados.
+
+Resultado: ____  Observaciones: ______________________________________
+
+PRUEBA 3.4 - Consultar, editar y reemplazar un articulo
+
+Pasos:
+1. Desde Mis articulos, abrir el articulo de prueba.
+2. Revisar sus datos y la vista previa del PDF.
+3. Mientras esta en Borrador, editar un dato y guardar.
+4. Si se desea, reemplazar el PDF por otro documento de prueba.
+5. Abrir nuevamente el articulo y comprobar los cambios.
+
+Esperado:
+- El estudiante puede volver a Mis articulos.
+- Datos y PDF actualizados se muestran correctamente.
+- La edicion solo se permite en los estados habilitados por el flujo.
+
+Resultado: ____  Observaciones: ______________________________________
+
+PRUEBA 3.5 - Acceso a articulos publicados
+
+Pasos:
+1. Publicar un articulo de prueba desde el flujo de administracion.
+2. Abrir Inicio o Explorar.
+3. Entrar al detalle publico del articulo.
+4. Probar la descarga del PDF con una cuenta autenticada.
+
+Esperado:
+- El articulo publicado aparece en el catalogo publico.
+- Se puede consultar el resumen y los datos publicos.
+- La descarga protegida requiere iniciar sesion.
+
+Resultado: ____  Observaciones: ______________________________________
+
+======================================================================
+4. DOCENTE, REPORTES Y REVISION
+======================================================================
+
+PRUEBA 4.1 - Permiso de reporte del docente asesor
+
+Preparacion: asignar el docente de prueba como asesor del articulo de
+prueba y dejar el articulo en un estado no publicado.
+
+Pasos:
+1. Iniciar sesion como docente asesor.
+2. Abrir el articulo asignado.
+3. Comprobar la seccion “Reportar articulo al administrador”.
+4. Enviar un motivo de prueba de al menos 10 caracteres.
+
+Esperado:
+- El docente asesor puede ver y enviar el formulario.
+- El sistema confirma el registro del reporte.
+- El administrador recibe el reporte en su panel.
+
+Resultado: ____  Observaciones: ______________________________________
+
+PRUEBA 4.2 - Restriccion de reporte para estudiantes y docentes no asesores
+
+Pasos:
+1. Iniciar sesion como estudiante y abrir un articulo.
+2. Confirmar que no aparece la seccion de reporte.
+3. Si hay otro docente que no sea asesor del articulo, repetir la consulta.
+4. Si el cliente dispone de herramientas tecnicas, intentar enviar el reporte
+   por API con una cuenta no autorizada.
+
+Esperado:
+- Estudiantes y docentes no asesores no ven la seccion.
+- El servidor rechaza un intento de envio no autorizado.
+
+Resultado: ____  Observaciones: ______________________________________
+
+PRUEBA 4.3 - Revision docente
+
+Pasos:
+1. Iniciar sesion como docente.
+2. Abrir Revisar articulos.
+3. Abrir un articulo no publicado y revisar datos y PDF.
+
+Esperado:
+- El docente puede consultar la lista y los articulos permitidos.
+- La navegacion vuelve a la seccion correspondiente.
+
+Resultado: ____  Observaciones: ______________________________________
+
+======================================================================
+5. PANEL ADMINISTRATIVO
+======================================================================
+
+PRUEBA 5.1 - Acceso administrativo y navegacion de regreso
+
+Pasos:
+1. Iniciar sesion con la cuenta administradora configurada.
+2. Abrir un articulo desde Revision.
+3. Revisar el boton de regreso.
+4. Pulsarlo.
+
+Esperado:
+- El boton dice “Volver a revisar articulos”.
+- Regresa a la pantalla de Revision, no a Mis articulos.
+- Un estudiante, por separado, ve “Volver a mis articulos”.
+
+Resultado: ____  Observaciones: ______________________________________
+
+PRUEBA 5.2 - Listas y cantidades
+
+Pasos:
+1. Abrir las secciones Usuarios, Articulos, Reportes y Ayuda y sugerencias.
+2. En cada seccion, probar 5, 10, 15 y Todos.
+3. Comparar el orden con las fechas de los registros.
+
+Esperado:
+- Cada lista muestra cinco registros recientes por defecto.
+- El selector cambia la cantidad visible.
+- Los elementos aparecen desde los mas recientes.
+- El contador indica total y cantidad visible.
+
+Resultado: ____  Observaciones: ______________________________________
+
+PRUEBA 5.3 - Cambiar estado de articulo y notificaciones
+
+Preparacion: usar un articulo de prueba con estudiantes registrados como
+autores. Confirmar que cada destinatario puede revisar su correo.
+
+Pasos:
+1. Desde Articulos en el panel, cambiar el estado del articulo de prueba.
+2. Guardar.
+3. Consultar Notificaciones con la cuenta de cada autor.
+4. Revisar el correo de cada autor.
+5. Marcar una notificacion como leida, individualmente.
+6. Comprobar el contador de notificaciones sin leer.
+
+Esperado:
+- Se crea una notificacion para cada autor registrado del articulo.
+- El correo informa el cambio de estado y conserva correctamente las tildes.
+- El correo indica que no se debe responder.
+- Marcar una notificacion no marca las demas.
+- El contador se actualiza.
+
+Resultado: ____  Observaciones: ______________________________________
+
+PRUEBA 5.4 - Reportes de articulos
+
+Pasos:
+1. Abrir Reportes en el panel.
+2. Probar los selectores de cantidad.
+3. Marcar un reporte pendiente En revision.
+4. Resolver un reporte de prueba.
+
+Esperado:
+- Los reportes muestran primero los mas recientes.
+- Los controles de cantidad funcionan.
+- El estado de cada reporte se actualiza.
+
+Resultado: ____  Observaciones: ______________________________________
+
+PRUEBA 5.5 - Ayuda y sugerencias en tarjetas y dialogo
+
+Pasos:
+1. Enviar una solicitud de prueba desde Ayuda y soporte con una cuenta
+   registrada.
+2. Abrir Ayuda y sugerencias en el panel.
+3. Revisar que cada fila muestre solamente asunto, autor, fecha/hora y estado.
+4. Abrir una solicitud.
+5. Revisar el contenido completo, responder y enviar.
+6. Comprobar el cambio de estado y revisar la notificacion/correo del usuario.
+7. Probar cerrar el dialogo y volver a abrir la solicitud.
+
+Esperado:
+- Las solicitudes recientes aparecen primero, cinco por defecto.
+- Los controles de cantidad funcionan.
+- El dialogo permite consultar el mensaje y enviar/actualizar una respuesta.
+- El usuario registrado recibe notificacion y correo.
+- El correo incluye el aviso de no responder.
+
+Resultado: ____  Observaciones: ______________________________________
+
+PRUEBA 5.6 - Usuarios y seguridad de cuenta
+
+Pasos:
+1. Aprobar una cuenta de prueba pendiente.
+2. Suspender una cuenta no administrativa de prueba.
+3. Intentar usar la sesion o iniciar sesion con la cuenta suspendida.
+
+Esperado:
+- El administrador puede aprobar y suspender cuentas no protegidas.
+- La cuenta administrativa protegida no puede suspenderse desde esta accion.
+- La cuenta suspendida no puede seguir utilizando el acceso normal.
+
+Resultado: ____  Observaciones: ______________________________________
+
+======================================================================
+6. NOTIFICACIONES Y AYUDA DEL USUARIO
+======================================================================
+
+PRUEBA 6.1 - Busqueda, filtros y cantidad de notificaciones
+
+Pasos:
+1. Iniciar sesion con un autor que tenga varias notificaciones de prueba.
+2. Abrir Notificaciones y confirmar que se muestren cinco inicialmente.
+3. Probar 10, 15 y Ver todas.
+4. Buscar una palabra de un mensaje o titulo.
+5. Filtrar Todas, Sin leer y Leidas.
+
+Esperado:
+- Los resultados se actualizan de acuerdo con cantidad, busqueda y filtro.
+- Las notificaciones se ordenan de mas reciente a mas antigua.
+- Si no hay coincidencias, se muestra un mensaje adecuado.
+
+Resultado: ____  Observaciones: ______________________________________
+
+PRUEBA 6.2 - Solicitud de ayuda como invitado (si esta habilitada)
+
+Pasos:
+1. Cerrar sesion.
+2. Enviar una solicitud desde Ayuda y soporte con un correo controlado.
+3. Responderla desde el panel administrativo.
+4. Revisar la bandeja del correo de prueba.
+
+Esperado:
+- La solicitud queda visible para administracion.
+- La respuesta se envia al correo indicado y contiene el aviso de no responder.
+
+Resultado: ____  Observaciones: ______________________________________
+
+======================================================================
+7. REGISTRO DE INCIDENCIAS Y CIERRE
+======================================================================
+
+Incidencia numero: ______________________________________________
+Paso de prueba: __________________________________________________
+Resultado esperado: ______________________________________________
+Resultado observado: _____________________________________________
+Fecha/hora: ______________________________________________________
+Navegador/ambiente: ______________________________________________
+Captura o referencia: ____________________________________________
+
+Resumen final:
+[ ] Aceptado
+[ ] Aceptado con observaciones
+[ ] Requiere correcciones antes de aceptar
+
+Observaciones generales:
+__________________________________________________________________
+__________________________________________________________________
+__________________________________________________________________
+
+Nombre y firma del cliente: ______________________________________
+Nombre y firma del responsable: __________________________________

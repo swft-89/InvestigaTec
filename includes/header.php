@@ -2,7 +2,10 @@
 <header class="topbar"><button id="menu-toggle" aria-label="Mostrar menú" aria-expanded="false" aria-controls="sidebar" class="mobile-menu">☰</button><div class="top-title">Instituto Tecnológico de Ciudad Juárez</div><div class="top-right">
   <?php if ($usuarioEncabezado && empty($usuarioEncabezado['is_admin'])): ?>
     <a class="notifications-shortcut" href="?page=notificaciones" aria-label="Notificaciones">
-      <span>Notificaciones</span>
+      <svg class="notifications-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path>
+        <path d="M10 21h4"></path>
+      </svg>
       <span class="notifications-badge" id="unread-notifications-count" hidden>0</span>
     </a>
   <?php endif; ?>

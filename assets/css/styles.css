@@ -150,19 +150,32 @@ button {
 }
 
 .notifications-shortcut {
+    position: relative;
     display: inline-flex;
     align-items: center;
-    gap: 7px;
     color: var(--blue2);
-    font-size: 12px;
-    font-weight: 600
+    line-height: 1
 }
 
 .notifications-shortcut:hover {
     color: var(--red)
 }
 
+.notifications-icon {
+    display: block;
+    width: 23px;
+    height: 23px;
+    fill: none;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 1.8
+}
+
 .notifications-badge {
+    position: absolute;
+    top: -7px;
+    right: -9px;
     display: inline-grid;
     min-width: 19px;
     height: 19px;
@@ -225,8 +238,8 @@ button {
     z-index: 10;
     top: calc(100% + 14px);
     right: 0;
-    width: min(320px, calc(100vw - 28px));
-    padding: 18px;
+    width: min(260px, calc(100vw - 28px));
+    padding: 14px;
     background: #fff;
     border: 1px solid var(--line);
     border-radius: var(--radius);
@@ -239,16 +252,17 @@ button {
 
 .account-popover-user {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 12px;
-    padding-bottom: 14px;
+    gap: 8px;
+    padding-bottom: 12px;
     border-bottom: 1px solid var(--line)
 }
 
 .account-popover-avatar {
-    flex: 0 0 52px;
-    width: 52px;
-    height: 52px;
+    flex: 0 0 48px;
+    width: 48px;
+    height: 48px;
     border-radius: 50%;
     object-fit: cover
 }
@@ -256,7 +270,9 @@ button {
 .account-popover-user div {
     min-width: 0;
     display: grid;
-    gap: 3px
+    gap: 3px;
+    justify-items: center;
+    text-align: center
 }
 
 .account-popover-user strong,
@@ -1384,10 +1400,6 @@ tbody tr:last-child td {
         font-size: 12px
     }
 
-    .notifications-shortcut {
-        font-size: 11px
-    }
-
     .mode {
         display: none
     }
@@ -1575,10 +1587,6 @@ tbody tr:last-child td {
 
     .admin-support-dialog {
         padding: 18px
-    }
-
-    .notifications-shortcut>span:first-child {
-        display: none
     }
 
     .article-details .account-summary-details {
