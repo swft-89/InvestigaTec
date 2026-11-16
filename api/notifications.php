@@ -34,6 +34,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                        n.leida, p.titulo
                 FROM ext_notificacion n
                 LEFT JOIN proyectos p ON p.id_proyecto = n.id_proyecto
+                    AND (p.eliminado IS FALSE OR ' .
+                    (!empty($user['is_admin']) ? 'TRUE' : 'FALSE') . ')
                 WHERE n.id_usuario = :usuario';
         $parameters = ['usuario' => $user['id']];
         if ($search !== '') {

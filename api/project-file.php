@@ -27,6 +27,7 @@ try {
         "SELECT a.ruta_archivo, a.nombre_original
          FROM archivos a JOIN proyectos p ON p.id_proyecto = a.id_proyecto
          WHERE p.id_proyecto = :proyecto
+           AND (p.eliminado IS FALSE OR " . (!empty($user['is_admin']) ? 'TRUE' : 'FALSE') . ")
            AND (" . $accessCondition . ")
          ORDER BY a.fecha_subida DESC, a.id_archivo DESC LIMIT 1"
     );

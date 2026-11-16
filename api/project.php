@@ -3,6 +3,7 @@ declare(strict_types=1);
 require __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../includes/cloudinary.php';
+require_once __DIR__ . '/../includes/pdf-validation.php';
 
 $user = current_user();
 if (!$user) json_response(401, ['error' => 'Inicia sesión para consultar este artículo.']);
@@ -22,8 +23,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                     WHERE pa.id_proyecto = p.id_proyecto
                       AND pa.id_usuario = :autor_acceso AND pa.tipo_participacion = 'AUTOR'
                )";
+        $deletedProjectAccess = !empty($user['is_admin']) ? 'TRUE' : 'FALSE';
         $projectQuery = $pdo->prepare(
-            "SELECT p.id_proyecto, p.titulo, p.resumen, p.estado, p.id_departamento, p.creado_por,
+            "SELECT p.id_proyecto, p.titulo, p.resumen, p.estado, p.eliminado, p.id_departamento, p.creado_por,
                     d.nombre AS departamento, p.fecha_creacion::date AS fecha_creacion,
                     p.fecha_publicacion::date AS fecha_publicacion,
                     (
@@ -38,7 +40,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
              FROM proyectos p
              JOIN departamentos d ON d.id_departamento = p.id_departamento
              WHERE p.id_proyecto = :proyecto
-               AND (" . $accessCondition . ')'
+               AND (p.eliminado IS FALSE OR {$deletedProjectAccess})
+               AND ({$accessCondition})"
         );
         $projectParameters = ['proyecto' => $projectId];
         if (!$canViewAllProjects) {
@@ -101,9 +104,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             $reportAccessQuery->execute(['proyecto' => $projectId, 'usuario' => $user['id']]);
             $project['has_open_report'] = (int)$reportAccessQuery->fetchColumn() > 0;
         }
-        $project['can_report'] = ($isAdmin || ($isAdvisor && $project['estado'] !== 'PUBLICADO'))
+        $isDeleted = filter_var($project['eliminado'], FILTER_VALIDATE_BOOLEAN);
+        $project['can_report'] = !$isDeleted &&
+            ($isAdmin || ($isAdvisor && $project['estado'] !== 'PUBLICADO'))
             && !$project['has_open_report'];
-        $project['can_edit'] = (int)$project['creado_por'] === (int)$user['id'];
+        $project['can_edit'] = !$isDeleted && (int)$project['creado_por'] === (int)$user['id'];
         if (!$project['can_edit']) {
             $authorAccessQuery = $pdo->prepare(
                 "SELECT CASE WHEN EXISTS (
@@ -198,8 +203,9 @@ if ($hasPdf) {
     }
     $mime = (new finfo(FILEINFO_MIME_TYPE))->file($pdf['tmp_name']);
     $signature = file_get_contents($pdf['tmp_name'], false, null, 0, 5);
-    if ($mime !== 'application/pdf' || $signature !== '%PDF-') {
-        json_response(422, ['error' => 'El archivo debe ser un PDF válido.']);
+    if ($mime !== 'application/pdf' || $signature !== '%PDF-' ||
+        !is_valid_uploaded_pdf($pdf['tmp_name'])) {
+        json_response(422, ['error' => 'El PDF está dañado, vacío o incompleto. Selecciona un documento PDF válido.']);
     }
     $uploadedName = $pdf['name'] ?? null;
     if (!is_string($uploadedName)) json_response(422, ['error' => 'El nombre del PDF no es válido.']);
@@ -228,7 +234,7 @@ try {
 
     $pdo->beginTransaction();
     $lockQuery = $pdo->prepare(
-        'SELECT estado, creado_por FROM proyectos WHERE id_proyecto = :id FOR UPDATE'
+        'SELECT estado, creado_por, eliminado FROM proyectos WHERE id_proyecto = :id FOR UPDATE'
     );
     $lockQuery->execute(['id' => $projectId]);
     $current = $lockQuery->fetch();
@@ -248,7 +254,8 @@ try {
             json_response(403, ['error' => 'Solo el creador o los autores pueden editar este artículo.']);
         }
     }
-    if (!in_array($current['estado'], ['BORRADOR', 'REQUIERE_CAMBIOS'], true)) {
+    if (filter_var($current['eliminado'], FILTER_VALIDATE_BOOLEAN) ||
+        !in_array($current['estado'], ['BORRADOR', 'REQUIERE_CAMBIOS'], true)) {
         $pdo->rollBack();
         json_response(409, ['error' => 'El artículo ya no se encuentra en un estado editable.']);
     }

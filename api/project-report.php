@@ -35,11 +35,15 @@ $reason = trim($reason);
 try {
     $pdo->beginTransaction();
     $projectQuery = $pdo->prepare(
-        'SELECT id_proyecto, titulo, estado FROM proyectos WHERE id_proyecto = :id FOR UPDATE'
+        'SELECT id_proyecto, titulo, estado, eliminado FROM proyectos WHERE id_proyecto = :id FOR UPDATE'
     );
     $projectQuery->execute(['id' => $projectId]);
     $project = $projectQuery->fetch();
     if (!$project) {
+        $pdo->rollBack();
+        json_response(404, ['error' => 'No se encontró el artículo.']);
+    }
+    if (filter_var($project['eliminado'], FILTER_VALIDATE_BOOLEAN)) {
         $pdo->rollBack();
         json_response(404, ['error' => 'No se encontró el artículo.']);
     }

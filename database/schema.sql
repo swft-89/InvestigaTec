@@ -141,6 +141,8 @@ CREATE TABLE proyectos (
         REFERENCES usuarios(id_usuario)
 );
 
+ALTER TABLE proyectos ADD COLUMN IF NOT EXISTS eliminado BOOLEAN NOT NULL DEFAULT FALSE;
+
 CREATE INDEX ix_proyectos_titulo ON proyectos(titulo);
 
 CREATE TABLE proyectos_autores (

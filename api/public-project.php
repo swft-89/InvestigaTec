@@ -19,7 +19,7 @@ try {
         "UPDATE proyectos
          SET estado = 'PUBLICADO',
              fecha_publicacion = COALESCE(fecha_publicacion, NOW())
-         WHERE id_proyecto = :id AND estado = 'APROBADO'"
+         WHERE id_proyecto = :id AND estado = 'APROBADO' AND eliminado IS FALSE"
     );
     $publish->execute(['id' => $projectId]);
 
@@ -56,7 +56,7 @@ try {
                 EXISTS (SELECT 1 FROM archivos a WHERE a.id_proyecto = p.id_proyecto) AS tiene_documento
          FROM proyectos p
          JOIN departamentos d ON d.id_departamento = p.id_departamento
-         WHERE p.id_proyecto = :proyecto AND p.estado = 'PUBLICADO'"
+         WHERE p.id_proyecto = :proyecto AND p.estado = 'PUBLICADO' AND p.eliminado IS FALSE"
     );
     $projectQuery->execute(['proyecto' => $projectId]);
     $project = $projectQuery->fetch();

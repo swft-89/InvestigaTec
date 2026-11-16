@@ -1,5 +1,6 @@
 import {service} from '../services.js';
 import {escapeHtml, limitMultiSelect, toast} from '../shared.js';
+import {validatePdf} from './pdf-validation.js';
 
 const statusLabels = {
   BORRADOR: 'Borrador',
@@ -145,9 +146,13 @@ export async function initArticle() {
     const button = form.querySelector('[type="submit"]');
     const pdf = form.elements.pdf.files[0];
     showMessage(output, '');
-    if (pdf && (!pdf.name.toLowerCase().endsWith('.pdf') || (pdf.type && pdf.type !== 'application/pdf') || pdf.size > 20 * 1024 * 1024)) {
-      showMessage(output, 'Selecciona un PDF válido que no supere 20 MB.');
-      return;
+    if (pdf) {
+      try {
+        await validatePdf(pdf);
+      } catch (error) {
+        showMessage(output, error.message || 'El PDF está dañado o vacío. Selecciona otro documento.');
+        return;
+      }
     }
     button.disabled = true;
     try {

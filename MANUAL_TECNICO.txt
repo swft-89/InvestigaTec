@@ -304,6 +304,7 @@ Para una base nueva, consultar README.md y aplicar primero:
 4. database/migrations/20261025_admin_moderation.sql
 5. database/migrations/20261101_cloudinary_profile_photos.sql
 6. database/migrations/20261101_brevo_email_and_password_recovery.sql
+7. database/migrations/20261115_soft_delete_projects.sql
 
 La migracion del 1 de noviembre de Brevo reinstala el trigger de estado para
 crear notificaciones con estado_envio PENDIENTE. En una base existente debe

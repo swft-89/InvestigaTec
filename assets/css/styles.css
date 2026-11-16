@@ -1428,8 +1428,25 @@ tbody tr:last-child td {
 }
 
 .note-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
     padding: 17px 0;
     border-bottom: 1px solid var(--line)
+}
+
+.note-content {
+    min-width: 0
+}
+
+.note-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 8px;
+    flex-shrink: 0
 }
 
 .note-row:last-child {
@@ -1530,14 +1547,23 @@ tbody tr:last-child td {
 }
 
 .notification-read-button {
-    display: block;
-    margin-top: 6px;
-    padding-left: 0
+    white-space: nowrap
 }
 
 .notification-read-button:disabled {
     color: var(--muted);
     cursor: default
+}
+
+@media (max-width: 640px) {
+    .note-row {
+        align-items: flex-start;
+        flex-direction: column
+    }
+
+    .note-actions {
+        justify-content: flex-start
+    }
 }
 
 .account-grid {

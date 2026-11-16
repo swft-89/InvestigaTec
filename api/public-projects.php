@@ -16,7 +16,7 @@ try {
         "UPDATE proyectos
          SET estado = 'PUBLICADO',
              fecha_publicacion = COALESCE(fecha_publicacion, NOW())
-         WHERE estado = 'APROBADO'"
+         WHERE estado = 'APROBADO' AND eliminado IS FALSE"
     );
     $articles = $pdo->query(
         "SELECT p.id_proyecto, p.titulo, p.resumen,
@@ -43,7 +43,7 @@ try {
                     WHERE ppc.id_proyecto = p.id_proyecto
                 ), '') AS palabras_clave
          FROM proyectos p
-         WHERE p.estado = 'PUBLICADO'
+         WHERE p.estado = 'PUBLICADO' AND p.eliminado IS FALSE
          ORDER BY COALESCE(p.fecha_publicacion, p.fecha_creacion) DESC, p.id_proyecto DESC"
     )->fetchAll();
 
@@ -57,13 +57,13 @@ try {
                 COUNT(DISTINCT pa.id_area) AS areas
              FROM proyectos p
              LEFT JOIN proyectos_areas pa ON pa.id_proyecto = p.id_proyecto
-             WHERE p.creado_por = :creador
+             WHERE p.eliminado IS FALSE AND (p.creado_por = :creador
                 OR EXISTS (
                     SELECT 1 FROM proyectos_autores autor
                     WHERE autor.id_proyecto = p.id_proyecto
                       AND autor.id_usuario = :autor
                       AND autor.tipo_participacion = 'AUTOR'
-                )"
+                ))"
         );
         $statsQuery->execute(['creador' => $user['id'], 'autor' => $user['id']]);
         $stats = $statsQuery->fetch();

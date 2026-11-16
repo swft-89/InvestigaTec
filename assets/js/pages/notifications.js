@@ -29,14 +29,18 @@ export async function initNotifications() {
             ? notification.fecha_envio
             : new Intl.DateTimeFormat('es-MX', {dateStyle: 'medium', timeStyle: 'short'}).format(date);
           return `<article class="note-row">
-            <h3>${escapeHtml(notification.mensaje)}${notification.leida ? '' : ' · Nuevo'}</h3>
-            <p>${escapeHtml(formattedDate)}</p>
-            ${notification.titulo ? `<a href="?page=articulo&amp;id=${encodeURIComponent(notification.id_proyecto)}">Ver artículo: ${escapeHtml(notification.titulo)}</a>` : ''}
-            <button class="text-button notification-read-button" type="button"
-              data-notification-id="${Number(notification.id_notificacion)}"
-              ${notification.leida ? 'disabled' : ''}>
-              ${notification.leida ? 'Leída' : 'Marcar como leída'}
-            </button>
+            <div class="note-content">
+              <h3>${escapeHtml(notification.mensaje)}${notification.leida ? '' : ' · Nuevo'}</h3>
+              <p>${escapeHtml(formattedDate)}</p>
+            </div>
+            <div class="note-actions">
+              ${notification.titulo ? `<a class="button secondary notification-view-button" href="?page=articulo&amp;id=${encodeURIComponent(notification.id_proyecto)}">Ver artículo</a>` : ''}
+              <button class="button ${notification.leida ? 'secondary' : 'primary'} notification-read-button" type="button"
+                data-notification-id="${Number(notification.id_notificacion)}"
+                ${notification.leida ? 'disabled' : ''}>
+                ${notification.leida ? 'Leída' : 'Marcar como leída'}
+              </button>
+            </div>
           </article>`;
         }).join('')
         : '<p>No hay notificaciones que coincidan con la búsqueda y el filtro.</p>';

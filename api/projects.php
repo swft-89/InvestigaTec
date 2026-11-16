@@ -3,6 +3,7 @@ declare(strict_types=1);
 require __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../includes/cloudinary.php';
+require_once __DIR__ . '/../includes/pdf-validation.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     try {
@@ -118,6 +119,9 @@ $mime = (new finfo(FILEINFO_MIME_TYPE))->file($pdf['tmp_name']);
 $signature = file_get_contents($pdf['tmp_name'], false, null, 0, 5);
 if ($mime !== 'application/pdf' || $signature !== '%PDF-') {
     json_response(422, ['error' => 'El archivo debe ser un PDF válido.']);
+}
+if (!is_valid_uploaded_pdf($pdf['tmp_name'])) {
+    json_response(422, ['error' => 'El PDF está dañado, vacío o incompleto. Selecciona un documento PDF válido.']);
 }
 
 $uploadedName = $pdf['name'] ?? null;

@@ -47,7 +47,9 @@ try {
             json_response(404, ['error' => 'No se encontró el perfil solicitado.']);
         }
 
-        $projectVisibility = $isAdmin ? '' : " AND pr.estado = 'PUBLICADO'";
+        $projectVisibility = $isAdmin
+            ? ''
+            : " AND pr.estado = 'PUBLICADO' AND pr.eliminado IS FALSE";
         $projectsQuery = $pdo->prepare(
             "SELECT pr.id_proyecto, pr.titulo, pr.estado,
                     COALESCE(pr.fecha_publicacion, pr.fecha_creacion) AS fecha,

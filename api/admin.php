@@ -29,7 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         unset($listedUser);
 
         $projects = $pdo->query(
-            "SELECT p.id_proyecto, p.titulo, p.estado, p.fecha_creacion,
+            "SELECT p.id_proyecto, p.titulo, p.estado, p.eliminado, p.fecha_creacion,
                     u.correo AS creador_correo,
                     (SELECT COUNT(*) FROM ext_reporte_proyecto r
                      WHERE r.id_proyecto = p.id_proyecto AND r.estado <> 'RESUELTO') AS reportes_abiertos
@@ -37,7 +37,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
              JOIN usuarios u ON u.id_usuario = p.creado_por
              ORDER BY p.fecha_creacion DESC, p.id_proyecto DESC"
         )->fetchAll();
-        foreach ($projects as &$project) $project['reportes_abiertos'] = (int)$project['reportes_abiertos'];
+        foreach ($projects as &$project) {
+            $project['reportes_abiertos'] = (int)$project['reportes_abiertos'];
+            $project['eliminado'] = filter_var($project['eliminado'], FILTER_VALIDATE_BOOLEAN);
+        }
         unset($project);
 
         $reports = $pdo->query(
@@ -81,7 +84,9 @@ try {
             json_response(422, ['error' => 'La cuenta o el estado indicado no son válidos.']);
         }
         $targetQuery = $pdo->prepare(
-            "SELECT id_usuario, ext_administrador FROM usuarios WHERE id_usuario = :id FOR UPDATE"
+            "SELECT id_usuario, ext_administrador, estado_cuenta, ext_aprobada,
+                    correo, nombre, apellido_paterno, apellido_materno
+             FROM usuarios WHERE id_usuario = :id FOR UPDATE"
         );
         $pdo->beginTransaction();
         $targetQuery->execute(['id' => $userId]);
@@ -94,6 +99,9 @@ try {
             $pdo->rollBack();
             json_response(422, ['error' => 'No puedes cambiar el estado de la cuenta administradora.']);
         }
+        $sendSuspensionEmail = $status === 'SUSPENDED' &&
+            ($target['estado_cuenta'] !== 'BLOQUEADA' ||
+             filter_var($target['ext_aprobada'], FILTER_VALIDATE_BOOLEAN));
         if ($status === 'APPROVED') {
             $update = $pdo->prepare("UPDATE usuarios SET ext_aprobada = TRUE, estado_cuenta = 'ACTIVA' WHERE id_usuario = :id");
         } else {
@@ -101,7 +109,32 @@ try {
         }
         $update->execute(['id' => $userId]);
         $pdo->commit();
-        json_response(200, ['message' => $status === 'APPROVED' ? 'Cuenta aprobada y activada.' : 'Cuenta suspendida.']);
+        if ($status === 'APPROVED') {
+            json_response(200, ['message' => 'Cuenta aprobada y activada.']);
+        }
+
+        $message = 'Cuenta suspendida.';
+        if ($sendSuspensionEmail) {
+            $recipientName = trim(implode(' ', array_filter([
+                $target['nombre'],
+                $target['apellido_paterno'],
+                $target['apellido_materno'],
+            ], static fn(?string $part): bool => $part !== null && $part !== '')));
+            try {
+                $escapedName = htmlspecialchars($recipientName, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+                brevo_send_email(
+                    (string)$target['correo'],
+                    $recipientName,
+                    'Aviso de suspensión de cuenta · InvestigaTec',
+                    '<p>Hola ' . $escapedName . '.</p><p>Tu cuenta de InvestigaTec fue suspendida y no puedes iniciar sesión. Si consideras que se trata de un error o necesitas más información, contacta con administración.</p>',
+                    'Hola ' . $recipientName . ".\n\nTu cuenta de InvestigaTec fue suspendida y no puedes iniciar sesión. Si consideras que se trata de un error o necesitas más información, contacta con administración."
+                );
+            } catch (Throwable $emailError) {
+                error_log('InvestigaTec correo de suspensión de cuenta ' . $userId . ': ' . $emailError->getMessage());
+                $message = 'Cuenta suspendida, pero no se pudo enviar el correo. Revisa la configuración y los logs de Brevo.';
+            }
+        }
+        json_response(200, ['message' => $message]);
     }
 
     if ($action === 'set_project_status') {

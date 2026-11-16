@@ -34,14 +34,14 @@ try {
                     LIMIT 1
                 ) AS archivo
          FROM proyectos p
-         WHERE p.creado_por = :creador
-            OR EXISTS (
+         WHERE p.eliminado IS FALSE
+           AND (p.creado_por = :creador OR EXISTS (
                 SELECT 1
                 FROM proyectos_autores autor
                 WHERE autor.id_proyecto = p.id_proyecto
                   AND autor.id_usuario = :autor
                   AND autor.tipo_participacion = 'AUTOR'
-            )
+            ))
          ORDER BY p.fecha_creacion DESC, p.id_proyecto DESC"
     );
     $query->execute(['creador' => $user['id'], 'autor' => $user['id']]);

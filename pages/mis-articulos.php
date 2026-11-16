@@ -8,8 +8,8 @@
   <div class="section-heading"><h2>Artículos registrados</h2><a class="button primary" href="?page=subir">Nuevo artículo</a></div>
   <div class="panel table-scroller">
     <table>
-      <thead><tr><th>Investigación</th><th>Área</th><th>Fecha</th><th>Estado</th><th>Versión</th><th>Documento</th></tr></thead>
-      <tbody id="my-list"><tr><td colspan="6">Cargando investigaciones...</td></tr></tbody>
+      <thead><tr><th>Investigación</th><th>Área</th><th>Fecha</th><th>Estado</th><th>Versión</th><th>Documento</th><th>Acciones</th></tr></thead>
+      <tbody id="my-list"><tr><td colspan="7">Cargando investigaciones...</td></tr></tbody>
     </table>
   </div>
 <?php endif; ?>

@@ -1,19 +1,7 @@
 import {service} from '../services.js';
 import {limitMultiSelect, toast} from '../shared.js';
-import {extractArticleSummary, extractPdfText} from './pdf-summary.js';
-
-let pdfjsLibPromise;
-
-function loadPdfJs() {
-  pdfjsLibPromise ??= import('../../../node_modules/pdfjs-dist/build/pdf.mjs').then(pdfjsLib => {
-    pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-      '../../../node_modules/pdfjs-dist/build/pdf.worker.min.mjs',
-      import.meta.url
-    ).href;
-    return pdfjsLib;
-  });
-  return pdfjsLibPromise;
-}
+import {extractArticleSummary} from './pdf-summary.js';
+import {validatePdf} from './pdf-validation.js';
 
 function showMessage(element, text) {
   element.textContent = text;
@@ -31,6 +19,7 @@ export function initUpload() {
   const summaryInput = form.elements.resumen;
   let extractedSummary = '';
   let extractionRequest = 0;
+  let validatedPdf = null;
   limitMultiSelect(areas, 3, exceeded => {
     showMessage(areasLimitMessage, exceeded ? 'Solo puedes seleccionar hasta 3 áreas temáticas.' : '');
   });
@@ -38,6 +27,7 @@ export function initUpload() {
   pdfInput.addEventListener('change', async () => {
     const pdf = pdfInput.files[0];
     const requestId = ++extractionRequest;
+    validatedPdf = null;
     showMessage(summaryStatus, '');
     if (summaryInput.value === extractedSummary) {
       summaryInput.value = '';
@@ -45,30 +35,11 @@ export function initUpload() {
     }
     extractedSummary = '';
     if (!pdf) return;
-    if (!pdf.name.toLowerCase().endsWith('.pdf') || (pdf.type && pdf.type !== 'application/pdf')) {
-      showMessage(summaryStatus, 'Selecciona un archivo PDF válido para extraer el resumen.');
-      return;
-    }
-    if (pdf.size > 20 * 1024 * 1024) {
-      showMessage(summaryStatus, 'El PDF no puede superar 20 MB.');
-      return;
-    }
-
-    showMessage(summaryStatus, 'Leyendo el documento en este navegador...');
+    showMessage(summaryStatus, 'Verificando que el PDF esté completo y pueda leerse...');
     try {
-      const pdfjsLib = await loadPdfJs();
-      const documentTask = pdfjsLib.getDocument({
-        data: new Uint8Array(await pdf.arrayBuffer()),
-        cMapUrl: new URL('../../../node_modules/pdfjs-dist/cmaps/', import.meta.url).href,
-        cMapPacked: true,
-        standardFontDataUrl: new URL('../../../node_modules/pdfjs-dist/standard_fonts/', import.meta.url).href,
-        isEvalSupported: false,
-        enableXfa: false,
-      });
-      const document = await documentTask.promise;
-      const text = await extractPdfText(document);
-      await document.destroy();
+      const text = await validatePdf(pdf);
       if (requestId !== extractionRequest) return;
+      validatedPdf = pdf;
       const result = extractArticleSummary(text);
       if (!result.summary) {
         showMessage(
@@ -90,7 +61,7 @@ export function initUpload() {
     } catch (error) {
       if (requestId !== extractionRequest) return;
       console.error('No se pudo leer el PDF para extraer el resumen.', error);
-      showMessage(summaryStatus, 'No se pudo leer este PDF. Puedes escribir el resumen manualmente y continuar.');
+      showMessage(summaryStatus, error.message || 'El PDF está dañado o vacío. Selecciona otro documento.');
     }
   });
 
@@ -109,12 +80,12 @@ export function initUpload() {
     event.preventDefault();
     showMessage(output, '');
     const pdf = form.elements.pdf.files[0];
-    if (!pdf || !pdf.name.toLowerCase().endsWith('.pdf') || (pdf.type && pdf.type !== 'application/pdf')) {
+    if (!pdf) {
       showMessage(output, 'Selecciona un archivo PDF válido.');
       return;
     }
-    if (pdf.size > 20 * 1024 * 1024) {
-      showMessage(output, 'El PDF no puede superar 20 MB.');
+    if (validatedPdf !== pdf) {
+      showMessage(output, 'El PDF no pudo validarse. Selecciona nuevamente un documento PDF legible y completo.');
       return;
     }
 
@@ -124,6 +95,7 @@ export function initUpload() {
       const result = await service.createProject(new FormData(form));
       form.reset();
       extractedSummary = '';
+      validatedPdf = null;
       showMessage(summaryStatus, '');
       toast(`Proyecto registrado correctamente (folio ${result.id_proyecto}).`);
       showMessage(output, `Proyecto registrado correctamente. Folio: ${result.id_proyecto}.`);

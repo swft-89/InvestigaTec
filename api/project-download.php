@@ -22,13 +22,13 @@ try {
         "UPDATE proyectos
          SET estado = 'PUBLICADO',
              fecha_publicacion = COALESCE(fecha_publicacion, NOW())
-         WHERE id_proyecto = :id AND estado = 'APROBADO'"
+         WHERE id_proyecto = :id AND estado = 'APROBADO' AND eliminado IS FALSE"
     );
     $publish->execute(['id' => $projectId]);
     $query = $pdo->prepare(
         "SELECT a.ruta_archivo
          FROM archivos a JOIN proyectos p ON p.id_proyecto = a.id_proyecto
-         WHERE p.id_proyecto = :proyecto AND p.estado = 'PUBLICADO'
+         WHERE p.id_proyecto = :proyecto AND p.estado = 'PUBLICADO' AND p.eliminado IS FALSE
          ORDER BY a.fecha_subida DESC, a.id_archivo DESC LIMIT 1"
     );
     $query->execute(['proyecto' => $projectId]);

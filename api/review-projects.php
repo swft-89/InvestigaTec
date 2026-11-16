@@ -33,7 +33,7 @@ try {
                  WHERE r.id_proyecto = p.id_proyecto AND r.estado <> 'RESUELTO') AS reportes_abiertos
          FROM proyectos p
          JOIN usuarios u ON u.id_usuario = p.creado_por
-         WHERE p.estado <> 'PUBLICADO'
+         WHERE p.estado <> 'PUBLICADO' AND p.eliminado IS FALSE
          ORDER BY CASE p.estado WHEN 'EN_REVISION' THEN 0 WHEN 'REQUIERE_CAMBIOS' THEN 1 ELSE 2 END,
                   p.fecha_creacion DESC"
     );

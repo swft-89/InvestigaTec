@@ -83,7 +83,9 @@ function renderProjects(projects) {
     return `<tr>
       <td><a href="?page=articulo&amp;id=${encodeURIComponent(project.id_proyecto)}">${escapeHtml(project.titulo)}</a></td>
       <td>${escapeHtml(project.creador_correo)}</td>
-      <td>${escapeHtml(statusLabels[project.estado] || project.estado)}</td>
+      <td>${project.eliminado
+        ? `<span class="status rejected">Eliminado · ${escapeHtml(statusLabels[project.estado] || project.estado)}</span>`
+        : escapeHtml(statusLabels[project.estado] || project.estado)}</td>
       <td>${project.reportes_abiertos}</td>
       <td><form class="admin-inline-form" data-form="project-status" data-id="${project.id_proyecto}">
         <select name="status" aria-label="Nuevo estado de ${escapeHtml(project.titulo)}">${options}</select>

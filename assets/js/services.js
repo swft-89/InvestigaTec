@@ -5,6 +5,9 @@ const get=(key,fallback)=>{try{return JSON.parse(localStorage.getItem(key))??fal
 const set=(key,value)=>localStorage.setItem(key,JSON.stringify(value));
 // Autenticación, proyectos y perfil usan la API PHP; otros módulos conservan datos de demostración.
 const csrfToken = () => document.querySelector('meta[name="csrf-token"]')?.content || '';
+const connectionError = saving => new Error(saving
+  ? 'Se perdió la conexión y no se pudo confirmar el guardado. El servidor guarda los artículos completos en una sola operación; revisa “Mis artículos” antes de volver a enviarlo para evitar duplicados.'
+  : 'No se pudo conectar con el servidor. Revisa tu conexión e inténtalo nuevamente.');
 async function apiRequest(url, payload) {
   const options = {credentials:'same-origin',headers:{'Accept':'application/json'}};
   if (payload !== undefined) {
@@ -16,10 +19,23 @@ async function apiRequest(url, payload) {
       options.body=JSON.stringify(payload);
     }
   }
-  const response=await fetch(url,options);
+  let response;
+  try {
+    response=await fetch(url,options);
+  } catch (error) {
+    if (error instanceof TypeError || (typeof navigator !== 'undefined' && !navigator.onLine)) {
+      throw connectionError(payload !== undefined);
+    }
+    throw error;
+  }
   let result;
   try { result=await response.json(); }
-  catch { throw new Error('Respuesta inválida del servidor. Revisa Apache/PHP.'); }
+  catch (error) {
+    if (error instanceof TypeError || (typeof navigator !== 'undefined' && !navigator.onLine)) {
+      throw connectionError(payload !== undefined);
+    }
+    throw new Error('Respuesta inválida del servidor. Revisa Apache/PHP.');
+  }
   if (!response.ok) throw new Error(result.error || 'No se pudo completar la operación.');
   return result;
 }
@@ -35,6 +51,7 @@ export const service={
  getProjectOptions:()=>apiRequest('api/projects.php'),
  createProject:data=>apiRequest('api/projects.php',data),
  getMyProjects:()=>apiRequest('api/my-projects.php'),
+ deleteProject:id=>apiRequest('api/project-delete.php',{project_id:id}),
  getProject:id=>apiRequest(`api/project.php?id=${encodeURIComponent(id)}`),
  updateProject:(id,data)=>apiRequest(`api/project.php?id=${encodeURIComponent(id)}`,data),
  getProjectFileUrl:id=>`api/project-file.php?id=${encodeURIComponent(id)}`,

@@ -20,6 +20,9 @@ try {
     $q->execute(['correo'=>$correo]);
     $u = $q->fetch();
     if (!$u || !password_verify($password, $u['password_hash'])) json_response(401,['error'=>'Correo o contraseña incorrectos.']);
+    if ($u['estado_cuenta'] === 'BLOQUEADA') {
+        json_response(403, ['error' => 'Tu cuenta ha sido suspendida y no puedes iniciar sesión. Si consideras que es un error, contacta con administración.']);
+    }
     if (!filter_var($u['ext_aprobada'], FILTER_VALIDATE_BOOLEAN)) json_response(403,['error'=>'Tu cuenta está pendiente de aprobación por el administrador.']);
     if ($u['estado_cuenta'] !== 'ACTIVA') json_response(403,['error'=>'La cuenta no está activa.']);
     $pdo->prepare('UPDATE usuarios SET ultimo_acceso = NOW() WHERE id_usuario = :id')->execute(['id'=>$u['id_usuario']]);
