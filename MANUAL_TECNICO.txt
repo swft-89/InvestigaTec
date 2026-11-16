@@ -1,7 +1,7 @@
 INVESTIGATEC
 MANUAL TECNICO: TECNOLOGIAS, MODULOS, ESTRUCTURA Y FUNCIONALIDADES
 
-Version del manual: 2 de noviembre de 2026
+Version del manual: 15 de noviembre de 2026
 
 ======================================================================
 1. DESCRIPCION GENERAL
@@ -27,6 +27,8 @@ Frontend:
 - PDF.js, paquete npm pdfjs-dist 5.4.624, para extraer texto de PDF en el
   navegador y buscar el apartado Resumen o Abstract.
 - Node.js y npm se usan para instalar PDF.js y ejecutar pruebas automatizadas.
+- PDF.js tambien analiza los PDF seleccionados antes de permitir el envio;
+  las pruebas cubren archivos vacios y danados.
 
 Backend:
 - PHP 8.3.
@@ -59,7 +61,8 @@ Construccion y despliegue:
 Pruebas:
 - npm test ejecuta Node.js test runner.
 - Actualmente incluye pruebas para extraccion de texto y del apartado
-  Resumen/Abstract en assets/js/pages/pdf-summary.test.js.
+  Resumen/Abstract en assets/js/pages/pdf-summary.test.js y validacion de
+  archivos PDF en assets/js/pages/pdf-validation.test.js.
 
 ======================================================================
 3. ESTRUCTURA DEL REPOSITORIO
@@ -80,6 +83,7 @@ Pruebas:
   api/
     Endpoints HTTP de autenticacion, usuarios, proyectos, avisos,
     administracion, revision, soporte y recuperacion de contrasena.
+    project-delete.php aplica borrado logico con permisos.
 
   assets/
     css/styles.css
@@ -92,6 +96,7 @@ Pruebas:
       Utilidades de interfaz compartidas.
     js/pages/
       Modulos JavaScript especificos de cada pantalla y pruebas.
+      pdf-validation.js valida/lee los PDF con PDF.js antes del envio.
 
   config/
     app.php
@@ -119,6 +124,8 @@ Pruebas:
       Seleccion de pagina, restricciones y etiquetas.
     brevo.php
       Envio de correo y despacho de correos asociados a notificaciones.
+    pdf-validation.php
+      Comprobaciones estructurales basicas del documento recibido.
     cloudinary.php
       Integracion con almacenamiento Cloudinary.
     header.php / sidebar.php
@@ -144,6 +151,12 @@ Pruebas:
 - Inicio y cierre de sesion.
 - Las cuentas nuevas quedan pendientes de aprobacion.
 - La suspension bloquea el acceso normal.
+- Si se ingresan credenciales correctas de una cuenta suspendida, el login
+  responde con un aviso especifico; las credenciales incorrectas mantienen
+  una respuesta generica.
+- Al suspender una cuenta desde el panel, se envia un correo por Brevo despues
+  de confirmar el cambio en PostgreSQL. Un fallo de correo no revierte la
+  suspension y se informa al administrador.
 - Recuperacion de contrasena por enlace de un solo uso y con vencimiento.
 - Perfil editable para los datos y opciones que correspondan al tipo de usuario.
 
@@ -159,22 +172,39 @@ Archivos principales:
 - Los autores deben ser cuentas existentes y activas.
 - Limite de 3 areas por proyecto.
 - PDF hasta 20 MB.
+- Antes de enviar, PDF.js intenta abrir el documento y recorrer sus paginas;
+  un archivo vacio o danado se notifica y no se envia desde el formulario.
+- El servidor valida tamano, tipo, firma y estructura PDF (catalogo, paginas,
+  referencia de xref y marcador EOF), y rechaza transferencias parciales.
+- Los metadatos, relaciones, historial, version y registro del PDF se guardan
+  en una transaccion. Si la transferencia se corta, no se crea un registro
+  parcial. Si la respuesta de red se pierde despues del commit, el usuario
+  debe revisar Mis articulos antes de reintentar para evitar duplicados.
 - Consulta de proyectos propios o donde el usuario participa como autor.
 - Edicion de metadatos y reemplazo de PDF en estados editables.
+- El creador/autor puede marcar como eliminado un articulo en BORRADOR o
+  RECHAZADO. Es un borrado logico (proyectos.eliminado); no elimina el articulo
+  ni sus documentos. Se oculta de vistas de usuario/publicas y queda visible
+  para administracion.
 - Vista previa protegida y descarga con control de acceso.
 - Catalogo de articulos publicados y ficha publica.
 - Historial de estados y versiones de PDF.
 
 Archivos principales:
   api/projects.php, api/my-projects.php, api/project.php,
+  api/project-delete.php,
   api/project-file.php, api/project-download.php, api/public-project.php,
   api/public-projects.php, api/carreras.php,
   assets/js/pages/upload.js, article.js, my-articles.js,
-  catalog.js, public-article.js.
+  pdf-validation.js, catalog.js, public-article.js,
+  includes/pdf-validation.php.
 
 4.3 Extraccion del resumen del PDF
 - PDF.js extrae texto localmente en el navegador; el PDF no se envia a un
   servicio externo.
+- La validacion del PDF es independiente de la extraccion del apartado
+  Resumen/Abstract. Un PDF valido sin capa de texto se puede completar con un
+  resumen manual; un PDF vacio/danado no se puede enviar.
 - Si encuentra el encabezado Resumen o Abstract, extrae el texto de esa
   seccion y lo coloca en el campo editable.
 - Si no encuentra ese apartado o el PDF no tiene texto extraible, informa al
@@ -188,6 +218,13 @@ Archivos principales:
 4.4 Revision y moderacion
 - Docentes activos consultan articulos no publicados.
 - El administrador gestiona estados, usuarios, reportes y solicitudes.
+- Las listas administrativas de Usuarios, Articulos, Reportes y Ayuda/
+  Sugerencias tienen buscadores independientes, insensibles a mayusculas y
+  acentos. La busqueda se aplica a los datos ya cargados en el panel y funciona
+  junto con los selectores de cantidad.
+- Las rutas de panel administrativo muestran un aviso de acceso restringido a
+  usuarios no autorizados. La revision academica es accesible para docentes
+  activos y administradores; sus API verifican el rol en el servidor.
 - Los cambios de estado se guardan en historial.
 - Estados de proyecto incluyen BORRADOR, EN_REVISION, REQUIERE_CAMBIOS,
   APROBADO, RECHAZADO y PUBLICADO.
@@ -206,6 +243,8 @@ Archivos principales:
 - La interfaz muestra cinco recientes de forma predeterminada y permite
   seleccionar 5, 10, 15 o todas, buscar, filtrar por lectura y marcar cada una
   individualmente como leida.
+- Cada aviso con articulo tiene acciones visibles para abrirlo y marcarlo como
+  leido. En pantallas estrechas los botones se acomodan debajo del contenido.
 - El encabezado muestra el contador de avisos sin leer.
 
 Archivos principales:
@@ -221,6 +260,8 @@ Archivos principales:
 - Las solicitudes se muestran compactas; un dialogo muestra el contenido y
   formulario de respuesta.
 - Los controles de panel permiten mostrar 5, 10, 15 o todas.
+- La busqueda de Ayuda y sugerencias incluye asunto, tipo, datos de contacto,
+  texto y estado de la solicitud.
 
 Archivos principales:
   api/support.php, api/admin.php, pages/ayuda.php, pages/admin.php,
@@ -229,10 +270,13 @@ Archivos principales:
 
 4.7 Correos
 - Brevo envia enlaces de recuperacion, avisos de cambio de estado, respuesta
-  a solicitudes y otros correos de notificacion implementados.
+  a solicitudes, aviso al suspender una cuenta y otros correos de notificacion
+  implementados.
 - Los mensajes HTML y texto incluyen el aviso de no responder.
 - Los errores se registran en los logs de PHP; algunos flujos tambien
   informan que el correo no pudo enviarse.
+- El aviso de suspension se envia despues del commit de la cuenta. Si Brevo
+  falla, la suspension permanece aplicada y el panel comunica el fallo.
 
 Variables de entorno relevantes:
   BREVO_API_KEY
@@ -255,6 +299,9 @@ Variables de entorno relevantes:
   incluyen en el detalle solicitado por el administrador.
 - En el panel administrativo, el nombre de cada cuenta abre el mismo dialogo
   con el perfil completo y sus articulos en cualquier estado.
+- El buscador del panel puede filtrar cuentas por nombre, correo, tipo,
+  afiliacion o estado; los buscadores de articulos, reportes y solicitudes
+  filtran por sus campos visibles o texto asociado.
 - El servidor vuelve a validar la sesion y el permiso administrativo y limita
   los resultados de busqueda a 50 usuarios.
 
@@ -275,6 +322,7 @@ api/carreras.php             Catalogo de carreras.
 api/projects.php             Catalogos y alta de proyectos.
 api/my-projects.php          Lista de articulos propios/participados.
 api/project.php              Consulta y edicion de articulo.
+api/project-delete.php       Borrado logico en estados permitidos.
 api/project-file.php         Vista previa del PDF con permisos.
 api/project-download.php     Descarga del PDF con permisos.
 api/public-project.php       Detalle de articulo publicado.
@@ -291,6 +339,10 @@ Las operaciones que modifican datos requieren sesion y token CSRF, salvo que
 el flujo sea deliberadamente publico como registro o solicitud de soporte.
 Los endpoints comprueban permisos en el servidor; ocultar un boton en el
 navegador no sustituye la autorizacion backend.
+
+El acceso a `?page=admin` requiere administrador. `?page=revision` admite
+docentes activos y administradores. Los endpoints administrativos requieren
+sesion de administrador aun si se invocan directamente.
 
 ======================================================================
 6. BASE DE DATOS Y ORDEN DE MIGRACIONES
@@ -310,6 +362,10 @@ La migracion del 1 de noviembre de Brevo reinstala el trigger de estado para
 crear notificaciones con estado_envio PENDIENTE. En una base existente debe
 aplicarse despues de desplegar cambios de codigo que actualicen esa migracion.
 No volver a reemplazar el trigger con una version anterior que use NO_APLICA.
+
+La migracion 20261115 agrega `proyectos.eliminado` e indice asociado. Debe
+aplicarse en bases existentes antes de desplegar endpoints que consultan ese
+campo. No elimina datos ni archivos existentes.
 
 Provisionar la cuenta administrativa requiere la marca administrativa,
 aprobacion y estado activo, ademas del correo de administrador configurado en
@@ -332,6 +388,10 @@ Preparacion de dependencias:
 
 Pruebas automatizadas:
 - npm test
+- php -l api/login.php
+- php -l api/admin.php
+- Revisar `GUIA_PRUEBAS_CLIENTE.txt` para escenarios de aceptacion, correo,
+  PDF danado/vacio, borrado logico, perdida de conexion y permisos.
 
 Variables de entorno utilizadas:
   DATABASE_URL
@@ -353,6 +413,10 @@ Apache, instala Composer y copia la dependencia PDF.js al directorio servido.
 
 - La extraccion de texto no puede recuperar contenido de PDF escaneados sin
   capa de texto; no hay OCR implementado.
+- La validacion del navegador usa el analizador PDF.js; el servidor comprueba
+  tipo, firma y estructura basica del documento. Los cambios de proyecto se
+  guardan en transaccion. Si la respuesta se pierde despues del commit, el
+  cliente debe consultar Mis articulos antes de reenviar.
 - El resumen es extractivo o copiado del apartado Resumen/Abstract, no
   generativo.
 - No hay evaluacion docente implementada.
@@ -363,5 +427,8 @@ Apache, instala Composer y copia la dependencia PDF.js al directorio servido.
   de objetos.
 - El envio de correos debe probarse con cuentas de prueba autorizadas y con un
   remitente verificado en Brevo.
+- La notificacion por correo de suspension se ejecuta al cambiar una cuenta a
+  BLOQUEADA; repetir la accion sobre una cuenta ya suspendida no duplica el
+  correo. Se necesita `BREVO_API_KEY` y un `BREVO_SENDER_EMAIL` verificado.
 - Antes de modificar triggers o migraciones en produccion, respaldar la base y
   aplicar los SQL en el orden documentado.

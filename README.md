@@ -15,6 +15,9 @@
 - `database/migrations/20261025_admin_moderation.sql`: aprobación de cuentas, reportes académicos y respuestas desde administración.
 - `database/migrations/20261101_brevo_email_and_password_recovery.sql`: recuperación de contraseña y notificaciones de correo por cambios de estado.
 - `database/migrations/20261115_soft_delete_projects.sql`: borrado lógico de artículos y visibilidad exclusiva para administración.
+- `MANUAL_USUARIO.md`: instrucciones para usuarios y espacios identificados para capturas.
+- `MANUAL_TECNICO.txt`: arquitectura, módulos, API, configuración y despliegue.
+- `GUIA_PRUEBAS_CLIENTE.txt`: guion de aceptación actualizado para estudiante, docente y administrador.
 - `services/README.md`: guía de integración de endpoints futuros.
 
 ## Alcance de esta entrega
