@@ -14,6 +14,9 @@
   <div class="section-heading">
     <h2>Usuarios</h2>
     <div class="admin-list-controls"><span id="admin-user-count" class="muted"></span>
+      <label class="admin-search-control">Buscar
+        <input type="search" data-admin-search="users" maxlength="200" placeholder="Nombre, correo o tipo" aria-label="Buscar usuarios">
+      </label>
       <label>Mostrar <select data-admin-limit="users" aria-label="Cantidad de usuarios"><option value="5">5</option><option value="10">10</option><option value="15">15</option><option value="all">Todos</option></select></label>
     </div>
   </div>
@@ -26,6 +29,9 @@
   <div class="section-heading">
     <h2>Artículos</h2>
     <div class="admin-list-controls"><span id="admin-project-count" class="muted"></span>
+      <label class="admin-search-control">Buscar
+        <input type="search" data-admin-search="projects" maxlength="200" placeholder="Título, autor o estado" aria-label="Buscar artículos">
+      </label>
       <label>Mostrar <select data-admin-limit="projects" aria-label="Cantidad de artículos"><option value="5">5</option><option value="10">10</option><option value="15">15</option><option value="all">Todos</option></select></label>
     </div>
   </div>
@@ -38,6 +44,9 @@
   <div class="section-heading">
     <h2>Reportes de artículos</h2>
     <div class="admin-list-controls"><span id="admin-report-count" class="muted"></span>
+      <label class="admin-search-control">Buscar
+        <input type="search" data-admin-search="reports" maxlength="200" placeholder="Artículo, motivo o reportante" aria-label="Buscar reportes">
+      </label>
       <label>Mostrar <select data-admin-limit="reports" aria-label="Cantidad de reportes"><option value="5">5</option><option value="10">10</option><option value="15">15</option><option value="all">Todos</option></select></label>
     </div>
   </div>
@@ -47,6 +56,9 @@
   <div class="section-heading">
     <h2>Solicitudes de ayuda y sugerencias</h2>
     <div class="admin-list-controls"><span id="admin-request-count" class="muted"></span>
+      <label class="admin-search-control">Buscar
+        <input type="search" data-admin-search="requests" maxlength="200" placeholder="Asunto, contacto o mensaje" aria-label="Buscar ayuda y sugerencias">
+      </label>
       <label>Mostrar <select data-admin-limit="requests" aria-label="Cantidad de solicitudes"><option value="5">5</option><option value="10">10</option><option value="15">15</option><option value="all">Todas</option></select></label>
     </div>
   </div>

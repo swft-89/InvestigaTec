@@ -835,7 +835,8 @@ button {
 .admin-list-controls {
     display: flex;
     align-items: center;
-    gap: 14px
+    flex-wrap: wrap;
+    gap: 10px 14px
 }
 
 .admin-list-controls label {
@@ -848,6 +849,19 @@ button {
 
 .admin-list-controls select {
     padding: 6px 8px;
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    background: #fff;
+    color: var(--text)
+}
+
+.admin-list-controls .admin-search-control {
+    gap: 7px
+}
+
+.admin-list-controls input[type="search"] {
+    width: min(240px, 32vw);
+    padding: 6px 9px;
     border: 1px solid var(--line);
     border-radius: 5px;
     background: #fff;
@@ -1889,6 +1903,15 @@ tbody tr:last-child td {
         width: 100%;
         justify-content: space-between;
         flex-wrap: wrap
+    }
+
+    .admin-list-controls .admin-search-control {
+        flex: 1 1 100%;
+        justify-content: space-between
+    }
+
+    .admin-list-controls input[type="search"] {
+        width: min(100%, 360px)
     }
 
     .admin-support-dialog {

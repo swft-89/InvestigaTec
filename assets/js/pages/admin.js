@@ -41,24 +41,48 @@ async function runAction(payload) {
 const output = document.querySelector('#admin-message');
 let dashboardData;
 
-function limitedItems(items, key, label) {
+function normalizeSearch(value) {
+  return String(value ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+}
+
+function limitedItems(items, key, label, searchValues) {
+  const searchInput = document.querySelector(`[data-admin-search="${key}"]`);
+  const term = normalizeSearch(searchInput.value.trim());
+  const filtered = term
+    ? items.filter(item => searchValues(item).some(value => normalizeSearch(value).includes(term)))
+    : items;
   const limit = document.querySelector(`[data-admin-limit="${key}"]`).value;
-  const visible = limit === 'all' ? items : items.slice(0, Number(limit));
+  const visible = limit === 'all' ? filtered : filtered.slice(0, Number(limit));
   const count = document.querySelector({
     users: '#admin-user-count',
     projects: '#admin-project-count',
     reports: '#admin-report-count',
     requests: '#admin-request-count',
   }[key]);
-  count.textContent = `${items.length} ${label} · mostrando ${visible.length}`;
+  count.textContent = term
+    ? `${filtered.length} resultados de ${items.length} ${label} · mostrando ${visible.length}`
+    : `${items.length} ${label} · mostrando ${visible.length}`;
   return visible;
 }
 
+function userStatus(user) {
+  return user.estado_cuenta === 'BLOQUEADA'
+    ? 'Suspendida'
+    : user.ext_aprobada ? 'Activa' : 'Pendiente de aprobación';
+}
+
 function renderUsers(users) {
-  document.querySelector('#admin-users-list').innerHTML = limitedItems(users, 'users', 'cuentas').map(user => {
-    const status = user.estado_cuenta === 'BLOQUEADA'
-      ? 'Suspendida'
-      : user.ext_aprobada ? 'Activa' : 'Pendiente de aprobación';
+  const visible = limitedItems(users, 'users', 'cuentas', user => [
+    user.nombre,
+    user.apellido_paterno,
+    user.apellido_materno,
+    user.correo,
+    user.ext_administrador ? 'ADMINISTRADOR' : user.tipo_usuario,
+    user.afiliacion,
+    userStatus(user),
+  ]);
+  document.querySelector('#admin-users-list').innerHTML = visible.map(user => {
+    const status = userStatus(user);
     const protectedAccount = user.ext_administrador;
     const action = protectedAccount ? '<span class="muted">Cuenta protegida</span>' : user.ext_aprobada && user.estado_cuenta !== 'BLOQUEADA'
       ? `<button class="button secondary admin-action" type="button" data-action="suspend-user" data-id="${user.id_usuario}">Suspender</button>`
@@ -72,11 +96,18 @@ function renderUsers(users) {
       <td>${escapeHtml(status)}</td>
       <td>${action}</td>
     </tr>`;
-  }).join('') || '<tr><td colspan="6">No hay cuentas registradas.</td></tr>';
+  }).join('') || `<tr><td colspan="6">${searchMessage('users', 'No hay cuentas registradas.')}</td></tr>`;
 }
 
 function renderProjects(projects) {
-  document.querySelector('#admin-projects-list').innerHTML = limitedItems(projects, 'projects', 'artículos').map(project => {
+  const visible = limitedItems(projects, 'projects', 'artículos', project => [
+    project.titulo,
+    project.creador_correo,
+    project.eliminado ? 'Eliminado' : '',
+    statusLabels[project.estado] || project.estado,
+    project.reportes_abiertos,
+  ]);
+  document.querySelector('#admin-projects-list').innerHTML = visible.map(project => {
     const options = projectStatuses.map(([value, label]) =>
       `<option value="${value}" ${value === project.estado ? 'selected' : ''}>${label}</option>`
     ).join('');
@@ -92,11 +123,19 @@ function renderProjects(projects) {
         <button class="button secondary" type="submit">Guardar</button>
       </form></td>
     </tr>`;
-  }).join('') || '<tr><td colspan="5">No hay artículos.</td></tr>';
+  }).join('') || `<tr><td colspan="5">${searchMessage('projects', 'No hay artículos.')}</td></tr>`;
 }
 
 function renderReports(reports) {
-  document.querySelector('#admin-reports-list').innerHTML = limitedItems(reports, 'reports', 'reportes').map(report => `
+  const visible = limitedItems(reports, 'reports', 'reportes', report => [
+    report.proyecto_titulo,
+    report.motivo,
+    report.reportado_por,
+    report.correo_reportante,
+    statusLabels[report.estado] || report.estado,
+    formatDate(report.fecha_creacion),
+  ]);
+  document.querySelector('#admin-reports-list').innerHTML = visible.map(report => `
     <article class="admin-record">
       <div class="section-heading"><h3>${escapeHtml(report.proyecto_titulo)}</h3>
         <span class="status ${report.estado === 'RESUELTO' ? 'approved' : 'review'}">${escapeHtml(statusLabels[report.estado] || report.estado)}</span>
@@ -108,29 +147,48 @@ function renderReports(reports) {
         ${report.estado === 'PENDIENTE' ? `<button class="button secondary admin-action" type="button" data-action="review-report" data-id="${report.id_reporte}">Marcar en revisión</button>` : ''}
         ${report.estado !== 'RESUELTO' ? `<button class="button primary admin-action" type="button" data-action="resolve-report" data-id="${report.id_reporte}">Resolver reporte</button>` : ''}
       </div>
-    </article>`).join('') || '<p class="muted">No se han recibido reportes de artículos.</p>';
+    </article>`).join('') || `<p class="muted">${searchMessage('reports', 'No se han recibido reportes de artículos.')}</p>`;
 }
 
 function renderSupport(requests) {
-  const visible = limitedItems(requests, 'requests', 'solicitudes');
+  const visible = limitedItems(requests, 'requests', 'solicitudes', request => [
+    request.asunto,
+    request.tipo,
+    request.nombre_contacto,
+    request.correo_contacto,
+    request.mensaje,
+    request.respuesta,
+    statusLabels[request.estado] || request.estado,
+  ]);
   document.querySelector('#admin-support-list').innerHTML = visible.map(request => `
     <button class="support-request-card" type="button" data-support-request="${request.id_solicitud}">
       <strong>${escapeHtml(request.asunto)}</strong>
       <span>${escapeHtml(request.nombre_contacto)}</span>
       <time datetime="${escapeHtml(request.fecha_creacion)}">${escapeHtml(formatDate(request.fecha_creacion))}</time>
       <span class="status ${request.estado === 'RESPONDIDA' ? 'approved' : 'review'}">${escapeHtml(statusLabels[request.estado] || request.estado)}</span>
-    </button>`).join('') || '<p class="muted">No se han recibido solicitudes de soporte.</p>';
+    </button>`).join('') || `<p class="muted">${searchMessage('requests', 'No se han recibido solicitudes de soporte.')}</p>`;
+}
+
+function searchMessage(key, emptyMessage) {
+  return document.querySelector(`[data-admin-search="${key}"]`).value.trim()
+    ? 'No se encontraron resultados para la búsqueda.'
+    : emptyMessage;
+}
+
+function renderLists() {
+  if (!dashboardData) return;
+  renderUsers(dashboardData.users);
+  renderProjects(dashboardData.projects);
+  renderReports(dashboardData.reports);
+  renderSupport(dashboardData.requests);
 }
 
 async function loadDashboard() {
   output.textContent = 'Cargando información administrativa...';
   try {
     const data = await service.getAdminDashboard();
-    renderUsers(data.users);
-    renderProjects(data.projects);
-    renderReports(data.reports);
-    renderSupport(data.requests);
     dashboardData = data;
+    renderLists();
     output.textContent = '';
   } catch (error) {
     output.textContent = error.message || 'No se pudo cargar el panel administrativo.';
@@ -142,12 +200,11 @@ export function initAdmin() {
   initUserProfileDialog(userProfileDialog);
   for (const select of document.querySelectorAll('[data-admin-limit]')) {
     select.addEventListener('change', () => {
-      if (!dashboardData) return;
-      renderUsers(dashboardData.users);
-      renderProjects(dashboardData.projects);
-      renderReports(dashboardData.reports);
-      renderSupport(dashboardData.requests);
+      renderLists();
     });
+  }
+  for (const input of document.querySelectorAll('[data-admin-search]')) {
+    input.addEventListener('input', renderLists);
   }
 
   document.querySelectorAll('[data-admin-tab]').forEach(tab => {
