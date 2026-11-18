@@ -16,6 +16,17 @@ function statusClass(status) {
   return 'review';
 }
 
+function articleActions(project) {
+  const actions = [];
+  if (project.can_edit === true || project.can_edit === 1 || project.can_edit === '1' || project.can_edit === 't') {
+    actions.push(`<a class="button secondary" href="?page=articulo&amp;id=${encodeURIComponent(project.id_proyecto)}">Editar</a>`);
+  }
+  if (project.can_delete === true || project.can_delete === 1 || project.can_delete === '1' || project.can_delete === 't') {
+    actions.push(`<button class="button secondary delete-project-button" type="button" data-project-id="${Number(project.id_proyecto)}">Eliminar</button>`);
+  }
+  return actions.length ? actions.join(' ') : '—';
+}
+
 export async function initMyArticles() {
   const tbody = document.querySelector('#my-list');
   if (!tbody) return;
@@ -31,9 +42,7 @@ export async function initMyArticles() {
             <td><span class="status ${statusClass(project.estado)}">${escapeHtml(statusLabels[project.estado] ?? project.estado)}</span></td>
             <td>${escapeHtml(project.version)}</td>
             <td>${escapeHtml(project.archivo ?? 'Sin documento')}</td>
-            <td>${['BORRADOR', 'RECHAZADO'].includes(project.estado)
-              ? `<button class="button secondary delete-project-button" type="button" data-project-id="${Number(project.id_proyecto)}">Eliminar</button>`
-              : '—'}</td>
+            <td>${articleActions(project)}</td>
           </tr>`).join('')
         : '<tr><td colspan="7">Todavía no tienes artículos registrados.</td></tr>';
     } catch (error) {

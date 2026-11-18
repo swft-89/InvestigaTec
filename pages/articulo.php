@@ -13,6 +13,7 @@
       <a class="button secondary" href="?page=mis-articulos">Volver a mis artículos</a>
     <?php endif; ?>
     <button class="button primary" id="edit-article" type="button" hidden>Editar artículo</button>
+    <button class="button secondary" id="delete-article" type="button" hidden>Eliminar artículo</button>
   </div>
   <section class="panel article-details" aria-labelledby="article-title">
     <div class="article-detail-status"><span id="article-status" class="status"></span></div>

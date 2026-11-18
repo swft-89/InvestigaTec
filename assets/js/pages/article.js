@@ -58,6 +58,8 @@ function renderProject(project) {
 
   const editButton = document.querySelector('#edit-article');
   editButton.hidden = !(project.can_edit && editableStates.has(project.estado));
+  const deleteButton = document.querySelector('#delete-article');
+  deleteButton.hidden = !project.can_delete;
   const reportPanel = document.querySelector('#article-report-panel');
   const reportForm = document.querySelector('#article-report-form');
   const reportMessage = document.querySelector('#article-report-message');
@@ -139,6 +141,19 @@ export async function initArticle() {
   });
   document.querySelector('#cancel-edit-article').addEventListener('click', () => {
     form.hidden = true;
+  });
+  document.querySelector('#delete-article').addEventListener('click', async event => {
+    if (!confirm('¿Eliminar este artículo? Esta acción lo marcará como eliminado.')) return;
+    const button = event.currentTarget;
+    button.disabled = true;
+    try {
+      await service.deleteProject(Number(id));
+      toast('El artículo se marcó como eliminado.');
+      location.assign('?page=mis-articulos');
+    } catch (error) {
+      button.disabled = false;
+      toast(error.message);
+    }
   });
   form.addEventListener('submit', async event => {
     event.preventDefault();

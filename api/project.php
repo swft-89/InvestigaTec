@@ -108,8 +108,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $project['can_report'] = !$isDeleted &&
             ($isAdmin || ($isAdvisor && $project['estado'] !== 'PUBLICADO'))
             && !$project['has_open_report'];
-        $project['can_edit'] = !$isDeleted && (int)$project['creado_por'] === (int)$user['id'];
-        if (!$project['can_edit']) {
+        $isArticleAuthor = (int)$project['creado_por'] === (int)$user['id'];
+        if (!$isArticleAuthor) {
             $authorAccessQuery = $pdo->prepare(
                 "SELECT CASE WHEN EXISTS (
                     SELECT 1 FROM proyectos_autores
@@ -118,8 +118,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                 ) THEN 1 ELSE 0 END"
             );
             $authorAccessQuery->execute(['proyecto' => $projectId, 'usuario' => $user['id']]);
-            $project['can_edit'] = (int)$authorAccessQuery->fetchColumn() === 1;
+            $isArticleAuthor = (int)$authorAccessQuery->fetchColumn() === 1;
         }
+        $project['can_edit'] = !$isDeleted && $isArticleAuthor &&
+            in_array($project['estado'], ['BORRADOR', 'REQUIERE_CAMBIOS'], true);
+        $project['can_delete'] = !$isDeleted && $isArticleAuthor &&
+            in_array($project['estado'], ['BORRADOR', 'RECHAZADO'], true);
         unset($project['creado_por']);
 
         $departments = $pdo->query('SELECT id_departamento, nombre FROM departamentos ORDER BY nombre')->fetchAll();

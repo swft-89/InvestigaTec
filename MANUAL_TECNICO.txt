@@ -407,6 +407,36 @@ La configuracion local de base puede residir en config/database.local.php,
 archivo privado que no se debe publicar. El despliegue Docker usa PHP 8.3 +
 Apache, instala Composer y copia la dependencia PDF.js al directorio servido.
 
+Respaldo semanal local en Windows:
+1. Instalar las herramientas cliente de PostgreSQL compatibles con la version
+   del servidor; `pg_dump` y `pg_restore` deben estar disponibles en PATH.
+2. Desde PowerShell, en la raiz del proyecto, ejecutar:
+     .\scripts\setup-database-backup.ps1
+   Pegar la DATABASE_URL externa de PostgreSQL de Render en el prompt oculto.
+   La base debe aceptar conexiones externas desde la red de esa computadora.
+   El instalador comprueba la conexion, genera un respaldo inicial y registra
+   una tarea para los domingos a las 3:00 AM (hora local).
+3. La tarea se ejecuta con el usuario actual de Windows, requiere que ese
+   usuario tenga la sesion iniciada y que la computadora este encendida y en
+   linea. Si se pierde la hora programada, Windows intentara ejecutarla al
+   siguiente inicio de sesion.
+4. Los archivos `.dump` quedan en `backups/database/`. El formato custom de
+   PostgreSQL incluye compresion; cada archivo se valida con `pg_restore
+   --list` y se conservan los cuatro mas recientes. La carpeta completa esta
+   excluida de Git. La URL queda protegida con DPAPI para el mismo usuario de
+   Windows y no se guarda en el codigo fuente.
+5. Para restaurar, primero crear una base PostgreSQL vacia y configurar sus
+   credenciales en `pgpass.conf`. Luego ejecutar:
+     pg_restore --no-owner --no-acl --dbname=NOMBRE_BASE "RUTA_AL_RESPALDO.dump"
+   No apuntar a una base con datos que se quieran conservar.
+
+Los respaldos contienen datos personales: proteger el equipo con cifrado de
+disco (por ejemplo, BitLocker) y limitar el acceso a la carpeta. Esta copia
+local no protege contra perdida, robo o dano de esa computadora, ni incluye
+los PDF y fotos almacenados en Cloudinary. Verificar periodicamente el
+resultado de la tarea en el Programador de tareas de Windows y probar la
+restauracion en una base separada.
+
 ======================================================================
 8. LIMITACIONES Y CONSIDERACIONES OPERATIVAS
 ======================================================================

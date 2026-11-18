@@ -3,6 +3,7 @@
 /.env
 /.env.*
 !/.env.example
+/backups/
 
 # Dependencias, caché y archivos locales
 /vendor/

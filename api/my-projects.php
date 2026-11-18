@@ -15,6 +15,8 @@ try {
     $query = db()->prepare(
         "SELECT p.id_proyecto, p.titulo, p.estado,
                 COALESCE(p.fecha_publicacion, p.fecha_creacion)::date AS fecha,
+                (p.estado IN ('BORRADOR', 'REQUIERE_CAMBIOS')) AS can_edit,
+                (p.estado IN ('BORRADOR', 'RECHAZADO')) AS can_delete,
                 COALESCE((
                     SELECT string_agg(DISTINCT area.nombre, ', ' ORDER BY area.nombre)
                     FROM proyectos_areas proyecto_area
