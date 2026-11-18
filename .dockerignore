@@ -1,0 +1,10 @@
+.git
+.gitignore
+.dockerignore
+node_modules
+vendor
+.env
+.env.*
+config/database.local.php
+uploads/perfiles/*
+!uploads/perfiles/.gitkeep
