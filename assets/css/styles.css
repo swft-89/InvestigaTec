@@ -1724,6 +1724,10 @@ tbody tr:last-child td {
         font-size: 12px
     }
 
+    .account-trigger-name {
+        display: none
+    }
+
     .mode {
         display: none
     }

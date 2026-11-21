@@ -16,7 +16,7 @@
       <?php else: ?>
         <span class="account-trigger-avatar account-trigger-placeholder" aria-hidden="true">👤</span>
       <?php endif; ?>
-      <span><?= e($usuarioEncabezado['name'] ?? 'Mi cuenta') ?></span>
+      <span class="account-trigger-name"><?= e($usuarioEncabezado['name'] ?? 'Mi cuenta') ?></span>
     </button>
     <section class="account-popover" id="account-popover" aria-labelledby="account-toggle" hidden>
       <?php if ($usuarioEncabezado): ?>
