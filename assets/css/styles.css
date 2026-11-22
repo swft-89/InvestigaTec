@@ -750,6 +750,25 @@ button {
     gap: 18px
 }
 
+.help-manual {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 22px 26px
+}
+
+.help-manual p:not(.eyebrow) {
+    color: var(--muted);
+    margin: 8px 0 0
+}
+
+.help-manual .button {
+    flex-shrink: 0;
+    margin-right: 0
+}
+
 .help-faq {
     padding: 26px
 }
@@ -1644,6 +1663,11 @@ tbody tr:last-child td {
 @media(max-width:800px) {
     .help-layout {
         grid-template-columns: 1fr
+    }
+
+    .help-manual {
+        align-items: flex-start;
+        flex-direction: column
     }
 
     .support-request-card {

@@ -6,6 +6,17 @@
 </div>
 
 <div class="help-layout">
+  <section class="panel help-manual" aria-labelledby="manual-heading">
+    <div>
+      <p class="eyebrow">Guía completa</p>
+      <h2 id="manual-heading">Manual de usuario de InvestigaTec</h2>
+      <p>Consulta las funciones de la plataforma paso a paso, desde el registro hasta la publicación de proyectos.</p>
+    </div>
+    <a class="button primary" href="Manual_Usuario_InvestigaTec.pdf" target="_blank" rel="noopener">
+      Abrir manual en PDF
+    </a>
+  </section>
+
   <section class="panel help-faq" aria-labelledby="faq-heading">
     <h2 id="faq-heading">Preguntas frecuentes</h2>
     <details>
